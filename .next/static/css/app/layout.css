@@ -810,9 +810,6 @@ body{
 .mr-3{
   margin-right: var(--spacing-3);
 }
-.mr-4{
-  margin-right: var(--spacing-4);
-}
 .mt-1{
   margin-top: var(--spacing-1);
 }
@@ -1029,6 +1026,9 @@ body{
 }
 .cursor-pointer{
   cursor: pointer;
+}
+.resize-none{
+  resize: none;
 }
 .resize-y{
   resize: vertical;
@@ -1971,12 +1971,6 @@ body{
   font-weight: 700;
   letter-spacing: -0.025em;
 }
-.text-heading-1{
-  font-size: 1.875rem;
-  line-height: 2.25rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-}
 .text-heading-2{
   font-size: 1.5rem;
   line-height: 2rem;
@@ -2224,6 +2218,11 @@ body{
 .hover\:bg-gray-100:hover{
   --tw-bg-opacity: 1;
   background-color: rgb(243 244 246 / var(--tw-bg-opacity, 1));
+}
+
+.hover\:bg-gray-200:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgb(229 231 235 / var(--tw-bg-opacity, 1));
 }
 
 .hover\:bg-gray-50:hover{

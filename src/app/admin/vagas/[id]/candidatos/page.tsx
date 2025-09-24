@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { useSimpleAuth } from '@/hooks/useSimpleAuth'
+import { useAdminAuth } from '@/hooks/useAdminAuth'
 import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { AdminLayout } from '@/components/admin/AdminLayout'
+import { LoadingPage } from '@/components/ui/loading'
+import { useToast } from '@/components/ui/toast'
 
 interface Vaga {
   id: string
@@ -44,7 +46,8 @@ export default function CandidatosVagaPage() {
   const router = useRouter()
   const params = useParams()
   const vagaId = params.id as string
-  const { user, loading: authLoading, isAdmin } = useSimpleAuth('/auth/login')
+  const { user, loading: authLoading, isAdmin } = useAdminAuth()
+  const { addToast } = useToast()
   
   const [vaga, setVaga] = useState<Vaga | null>(null)
   const [candidatos, setCandidatos] = useState<Candidato[]>([])
@@ -52,38 +55,66 @@ export default function CandidatosVagaPage() {
   const [filtroStatus, setFiltroStatus] = useState<string>('')
 
   useEffect(() => {
-    if (!authLoading && user && isAdmin && vagaId) {
+    if (!authLoading && !user) {
+      router.push('/admin/auth/login')
+    } else if (!authLoading && user && vagaId) {
       loadData()
     }
-  }, [authLoading, user, isAdmin, vagaId])
+  }, [authLoading, user, vagaId, router])
 
   const loadData = async () => {
-    const supabase = createClient()
-    
-    const [vagaRes, candidatosRes] = await Promise.all([
-      supabase.from('aura_jobs_vagas').select('*').eq('id', vagaId).single(),
-      supabase.from('aura_jobs_candidatos').select('*').eq('vaga_id', vagaId).order('created_at', { ascending: false })
-    ])
+    try {
+      const supabase = createClient()
+      
+      const [vagaRes, candidatosRes] = await Promise.all([
+        supabase.from('aura_jobs_vagas').select('*').eq('id', vagaId).single(),
+        supabase.from('aura_jobs_candidatos').select('*').eq('vaga_id', vagaId).order('created_at', { ascending: false })
+      ])
 
-    if (!vagaRes.error && vagaRes.data) {
-      setVaga(vagaRes.data)
+      if (!vagaRes.error && vagaRes.data) {
+        setVaga(vagaRes.data)
+      }
+      
+      if (!candidatosRes.error && candidatosRes.data) {
+        setCandidatos(candidatosRes.data)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error)
+      addToast({
+        type: 'error',
+        title: 'Erro',
+        message: 'Erro ao carregar dados. Tente novamente.'
+      })
+    } finally {
+      setLoading(false)
     }
-    
-    if (!candidatosRes.error && candidatosRes.data) {
-      setCandidatos(candidatosRes.data)
-    }
-    
-    setLoading(false)
   }
 
   const updateCandidatoStatus = async (candidatoId: string, status: string) => {
-    const supabase = createClient()
-    await supabase
-      .from('aura_jobs_candidatos')
-      .update({ status })
-      .eq('id', candidatoId)
-    
-    loadData()
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('aura_jobs_candidatos')
+        .update({ status })
+        .eq('id', candidatoId)
+      
+      if (error) throw error
+      
+      addToast({
+        type: 'success',
+        title: 'Status atualizado',
+        message: 'O status do candidato foi atualizado com sucesso.'
+      })
+      
+      loadData()
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error)
+      addToast({
+        type: 'error',
+        title: 'Erro',
+        message: 'Erro ao atualizar status do candidato.'
+      })
+    }
   }
 
   const getStatusColor = (status: string) => {
@@ -140,14 +171,9 @@ export default function CandidatosVagaPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Carregando...</h1>
-          <p className="text-sm text-gray-500 mt-2">
-            {authLoading ? 'Verificando autenticação...' : 'Carregando candidatos...'}
-          </p>
-        </div>
-      </div>
+      <LoadingPage 
+        text={authLoading ? 'Verificando autenticação...' : 'Carregando candidatos...'}
+      />
     )
   }
 
@@ -158,7 +184,7 @@ export default function CandidatosVagaPage() {
           <h1 className="text-2xl font-bold text-red-600">Acesso Negado</h1>
           <p className="text-gray-600">Você não tem permissão de administrador.</p>
           <button 
-            onClick={() => router.push('/auth/login')} 
+            onClick={() => router.push('/admin/auth/login')} 
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Fazer Login
@@ -179,53 +205,50 @@ export default function CandidatosVagaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <Link href="/admin/vagas" className="mr-4 text-neutral-600 hover:text-neutral-900">
-                ← Voltar para Vagas
-              </Link>
-              <div>
-                <h1 className="text-heading-1">
-                  Candidatos - {vaga.titulo}
-                </h1>
-                <p className="text-body-small text-neutral-600 mt-1">
-                  {vaga.departamento} • {estatisticas.total} candidato{estatisticas.total !== 1 ? 's' : ''}
-                </p>
-              </div>
+    <AdminLayout>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/admin/vagas" className="text-gray-600 hover:text-gray-900">
+              ← Voltar
+            </Link>
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">
+                Candidatos - {vaga.titulo}
+              </h1>
+              <p className="text-gray-600 mt-1">
+                {vaga.departamento} • {estatisticas.total} candidato{estatisticas.total !== 1 ? 's' : ''}
+              </p>
             </div>
           </div>
         </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Estatísticas */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-          <Card variant="clean" size="sm">
-            <CardContent className="text-center">
-              <div className="text-2xl font-bold text-neutral-900">{estatisticas.total}</div>
-              <div className="text-xs text-neutral-600">Total</div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-900">{estatisticas.total}</div>
+              <div className="text-xs text-gray-600">Total</div>
+            </div>
+          </div>
           
           {Object.entries(estatisticas.porStatus).map(([status, count]) => (
-            <Card key={status} variant="clean" size="sm">
-              <CardContent className="text-center">
-                <div className="text-2xl font-bold text-neutral-900">{count}</div>
-                <div className="text-xs text-neutral-600">{getStatusLabel(status)}</div>
-              </CardContent>
-            </Card>
+            <div key={status} className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">{count}</div>
+                <div className="text-xs text-gray-600">{getStatusLabel(status)}</div>
+              </div>
+            </div>
           ))}
         </div>
 
         {/* Filtros */}
-        <div className="mb-6 flex gap-4">
+        <div className="bg-white rounded-xl border border-gray-200/60 p-4">
           <select
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value)}
-            className="input-clean max-w-xs"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
           >
             <option value="">Todos os status</option>
             {Object.keys(estatisticas.porStatus).map(status => (
@@ -237,121 +260,117 @@ export default function CandidatosVagaPage() {
         </div>
 
         {/* Lista de Candidatos */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {candidatosFiltrados.map((candidato) => (
-            <Card key={candidato.id} variant="clean">
-              <CardContent>
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-3">
-                      <h3 className="text-heading-3">{candidato.nome_completo}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(candidato.status)}`}>
-                        {getStatusLabel(candidato.status)}
-                      </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-body-small text-neutral-600">
-                      <div>
-                        <strong>Email:</strong> {candidato.email}
-                      </div>
-                      <div>
-                        <strong>WhatsApp:</strong> {candidato.whatsapp || candidato.telefone || 'N/A'}
-                      </div>
-                      <div>
-                        <strong>Cidade:</strong> {candidato.cidade || 'N/A'}, {candidato.estado || 'N/A'}
-                      </div>
-                      <div>
-                        <strong>Empresa:</strong> {candidato.empresa_atual || 'N/A'}
-                      </div>
-                      <div>
-                        <strong>Cargo:</strong> {candidato.cargo_atual || 'N/A'}
-                      </div>
-                      <div>
-                        <strong>Experiência:</strong> {candidato.tempo_experiencia_total ? `${Math.floor(candidato.tempo_experiencia_total/12)} anos` : 'N/A'}
-                      </div>
-                      {candidato.nivel_ingles && (
-                        <div>
-                          <strong>Inglês:</strong> {candidato.nivel_ingles}
-                        </div>
-                      )}
-                      {candidato.pretensao_salarial && (
-                        <div>
-                          <strong>Pretensão:</strong> R$ {candidato.pretensao_salarial.toLocaleString('pt-BR')}
-                        </div>
-                      )}
-                      {candidato.disponibilidade_inicio && (
-                        <div>
-                          <strong>Disponibilidade:</strong> {candidato.disponibilidade_inicio}
-                        </div>
-                      )}
-                    </div>
-
-                    {candidato.competencias_tecnicas && (
-                      <div className="mt-3">
-                        <strong className="text-body-small">Competências Técnicas:</strong>
-                        <p className="text-body-small text-neutral-600">{candidato.competencias_tecnicas}</p>
-                      </div>
-                    )}
-                    {candidato.linguagens_programacao && (
-                      <div className="mt-2">
-                        <strong className="text-body-small">Linguagens:</strong>
-                        <p className="text-body-small text-neutral-600">{candidato.linguagens_programacao}</p>
-                      </div>
-                    )}
-                    {candidato.linkedin && (
-                      <div className="mt-2">
-                        <a href={candidato.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                          LinkedIn →
-                        </a>
-                      </div>
-                    )}
+            <div key={candidato.id} className="bg-white rounded-xl border border-gray-200/60 p-4">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex items-center gap-4 mb-3">
+                    <h3 className="text-lg font-medium text-gray-900">{candidato.nome_completo}</h3>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(candidato.status)}`}>
+                      {getStatusLabel(candidato.status)}
+                    </span>
                   </div>
                   
-                  <div className="flex flex-col gap-2 ml-4">
-                    <select
-                      value={candidato.status}
-                      onChange={(e) => updateCandidatoStatus(candidato.id, e.target.value)}
-                      className="text-xs border rounded px-2 py-1"
-                    >
-                      <option value="pendente">Pendente</option>
-                      <option value="em_analise">Em Análise</option>
-                      <option value="aprovado">Aprovado</option>
-                      <option value="reprovado">Reprovado</option>
-                      <option value="inscrito">Inscrito</option>
-                      <option value="em_avaliacao_ia">Em Avaliação IA</option>
-                      <option value="reprovado_ia">Reprovado IA</option>
-                      <option value="case_enviado">Case Enviado</option>
-                      <option value="em_avaliacao_case">Avaliando Case</option>
-                      <option value="aprovado_case">Case Aprovado</option>
-                      <option value="reprovado_case">Case Reprovado</option>
-                      <option value="entrevista_tecnica">Entrevista Técnica</option>
-                      <option value="entrevista_socios">Entrevista Sócios</option>
-                      <option value="contratado">Contratado</option>
-                    </select>
-                    
-                    <Link
-                      href={`/admin/candidatos/${candidato.id}`}
-                      className="btn-ghost text-xs py-1 px-2 text-center"
-                    >
-                      Ver Detalhes
-                    </Link>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                    <div>
+                      <strong>Email:</strong> {candidato.email}
+                    </div>
+                    <div>
+                      <strong>WhatsApp:</strong> {candidato.whatsapp || candidato.telefone || 'N/A'}
+                    </div>
+                    <div>
+                      <strong>Cidade:</strong> {candidato.cidade || 'N/A'}, {candidato.estado || 'N/A'}
+                    </div>
+                    <div>
+                      <strong>Empresa:</strong> {candidato.empresa_atual || 'N/A'}
+                    </div>
+                    <div>
+                      <strong>Cargo:</strong> {candidato.cargo_atual || 'N/A'}
+                    </div>
+                    <div>
+                      <strong>Experiência:</strong> {candidato.tempo_experiencia_total ? `${Math.floor(candidato.tempo_experiencia_total/12)} anos` : 'N/A'}
+                    </div>
+                    {candidato.nivel_ingles && (
+                      <div>
+                        <strong>Inglês:</strong> {candidato.nivel_ingles}
+                      </div>
+                    )}
+                    {candidato.pretensao_salarial && (
+                      <div>
+                        <strong>Pretensão:</strong> R$ {candidato.pretensao_salarial.toLocaleString('pt-BR')}
+                      </div>
+                    )}
+                    {candidato.disponibilidade_inicio && (
+                      <div>
+                        <strong>Disponibilidade:</strong> {candidato.disponibilidade_inicio}
+                      </div>
+                    )}
                   </div>
+
+                  {candidato.competencias_tecnicas && (
+                    <div className="mt-3">
+                      <strong className="text-sm">Competências Técnicas:</strong>
+                      <p className="text-sm text-gray-600">{candidato.competencias_tecnicas}</p>
+                    </div>
+                  )}
+                  {candidato.linguagens_programacao && (
+                    <div className="mt-2">
+                      <strong className="text-sm">Linguagens:</strong>
+                      <p className="text-sm text-gray-600">{candidato.linguagens_programacao}</p>
+                    </div>
+                  )}
+                  {candidato.linkedin && (
+                    <div className="mt-2">
+                      <a href={candidato.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                        LinkedIn →
+                      </a>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+                
+                <div className="flex flex-col gap-2 ml-4">
+                  <select
+                    value={candidato.status}
+                    onChange={(e) => updateCandidatoStatus(candidato.id, e.target.value)}
+                    className="text-xs border rounded px-2 py-1"
+                  >
+                    <option value="pendente">Pendente</option>
+                    <option value="em_analise">Em Análise</option>
+                    <option value="aprovado">Aprovado</option>
+                    <option value="reprovado">Reprovado</option>
+                    <option value="inscrito">Inscrito</option>
+                    <option value="em_avaliacao_ia">Em Avaliação IA</option>
+                    <option value="reprovado_ia">Reprovado IA</option>
+                    <option value="case_enviado">Case Enviado</option>
+                    <option value="em_avaliacao_case">Avaliando Case</option>
+                    <option value="aprovado_case">Case Aprovado</option>
+                    <option value="reprovado_case">Case Reprovado</option>
+                    <option value="entrevista_tecnica">Entrevista Técnica</option>
+                    <option value="entrevista_socios">Entrevista Sócios</option>
+                    <option value="contratado">Contratado</option>
+                  </select>
+                  
+                  <Link
+                    href={`/admin/candidatos/${candidato.id}`}
+                    className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors text-center"
+                  >
+                    Ver Detalhes
+                  </Link>
+                </div>
+              </div>
+            </div>
           ))}
           
           {candidatosFiltrados.length === 0 && (
-            <Card variant="clean">
-              <CardContent className="text-center py-12">
-                <p className="text-neutral-500">
-                  {filtroStatus ? 'Nenhum candidato encontrado com este status.' : 'Nenhum candidato inscrito nesta vaga ainda.'}
-                </p>
-              </CardContent>
-            </Card>
+            <div className="bg-white rounded-xl border border-gray-200/60 p-12 text-center">
+              <p className="text-gray-500">
+                {filtroStatus ? 'Nenhum candidato encontrado com este status.' : 'Nenhum candidato inscrito nesta vaga ainda.'}
+              </p>
+            </div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   )
 }
