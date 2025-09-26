@@ -294,7 +294,7 @@ export default function PerfilPage() {
                 <div>
                   <p className="text-body font-medium">Conta criada</p>
                   <p className="text-body-small text-neutral-600">
-                    {user && new Date(user.id).toLocaleDateString('pt-BR')}
+                    {user && user.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : 'Data não disponível'}
                   </p>
                 </div>
               </div>

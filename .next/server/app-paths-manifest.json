@@ -1,8 +1,8 @@
 {
+  "/candidato/page": "app/candidato/page.js",
+  "/candidato/perfil/page": "app/candidato/perfil/page.js",
   "/page": "app/page.js",
-  "/admin/candidatos/page": "app/admin/candidatos/page.js",
-  "/admin/candidatos/[id]/page": "app/admin/candidatos/[id]/page.js",
-  "/admin/page": "app/admin/page.js",
-  "/admin/vagas/[id]/candidatos/page": "app/admin/vagas/[id]/candidatos/page.js",
-  "/admin/vagas/page": "app/admin/vagas/page.js"
+  "/candidato/auth/login/page": "app/candidato/auth/login/page.js",
+  "/candidato/candidaturas/page": "app/candidato/candidaturas/page.js",
+  "/admin/configuracoes/page": "app/admin/configuracoes/page.js"
 }

@@ -6,6 +6,8 @@ interface CandidatoUser {
   id: string
   nome: string
   email: string
+  telefone?: string
+  created_at?: string
 }
 
 export function useCandidatoAuth(redirectTo?: string) {
@@ -56,10 +58,14 @@ export function useCandidatoAuth(redirectTo?: string) {
 
       // Atualizar dados do usuário
       const user = session.user as any
+      console.log('Debug - User data from session:', user)
+      console.log('Debug - created_at field:', user.created_at)
       setUser({
         id: user.id,
         nome: user.nome_completo,
-        email: user.email
+        email: user.email,
+        telefone: user.telefone,
+        created_at: user.created_at
       })
 
     } catch (error) {

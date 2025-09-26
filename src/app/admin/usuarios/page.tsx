@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useSimpleAuth } from '@/hooks/useSimpleAuth'
+import { useAdminAuth } from '@/hooks/useAdminAuth'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 
 interface Usuario {
@@ -23,7 +23,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export default function UsuariosPage() {
-  const { user, loading: authLoading, isAdmin } = useSimpleAuth('/auth/login')
+  const { user, loading: authLoading, isAdmin } = useAdminAuth()
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -98,7 +98,7 @@ export default function UsuariosPage() {
               {usuarios.length} usuário{usuarios.length !== 1 ? 's' : ''} cadastrado{usuarios.length !== 1 ? 's' : ''}
             </p>
           </div>
-          <Link href="/auth/signup">
+          <Link href="/admin/auth/signup">
             <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
               <span>+</span>
               <span>Novo Usuário</span>

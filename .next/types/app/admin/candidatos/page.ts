@@ -1,4 +1,4 @@
-// File: /Users/lucasfernandes/code/aura/aura-psel/src/app/admin/candidatos/page.tsx
+// File: /Users/Paula2/Desktop/aura-psel/src/app/admin/candidatos/page.tsx
 import * as entry from '../../../../../src/app/admin/candidatos/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

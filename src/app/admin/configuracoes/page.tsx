@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSimpleAuth } from '@/hooks/useSimpleAuth'
+import { useAdminAuth } from '@/hooks/useAdminAuth'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 
 export default function ConfiguracoesPage() {
   const router = useRouter()
-  const { user, loading: authLoading, isAdmin } = useSimpleAuth('/auth/login')
+  const { user, loading: authLoading, isAdmin } = useAdminAuth()
 
   if (authLoading) {
     return (

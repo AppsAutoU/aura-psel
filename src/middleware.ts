@@ -31,21 +31,8 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect admin routes
-  if (request.nextUrl.pathname.startsWith('/admin') && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
-    url.searchParams.set('redirect', request.nextUrl.pathname)
-    return NextResponse.redirect(url)
-  }
-
-  // Protect avaliador routes
-  if (request.nextUrl.pathname.startsWith('/avaliador') && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
-    url.searchParams.set('redirect', request.nextUrl.pathname)
-    return NextResponse.redirect(url)
-  }
+  // Note: Admin and avaliador routes now handle authentication client-side like candidato routes
+  // Middleware protection removed to allow pages to load and handle their own auth redirects
 
   return supabaseResponse
 }
