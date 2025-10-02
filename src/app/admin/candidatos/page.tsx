@@ -110,17 +110,18 @@ export default function CandidatosPage() {
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      'inscrito': 'Inscrito',
-      'em_avaliacao_ia': 'Em Avaliação IA',
-      'reprovado_ia': 'Reprovado IA',
-      'case_enviado': 'Case Enviado',
-      'em_avaliacao_case': 'Avaliando Case',
+      'inscrito': 'Inscrição Recebida',
+      'em_avaliacao_ia': 'Em Avaliação pela IA',
+      'reprovado_ia': 'Reprovado pelo Teste IA',
+      'aprovado_ia': 'Aprovado pelo Teste IA',
+      'case_enviado': 'Case Prático Enviado',
+      'em_avaliacao_case': 'Case em Avaliação',
       'aprovado_case': 'Case Aprovado',
-      'reprovado_case': 'Case Reprovado',
-      'entrevista_tecnica': 'Entrevista Técnica',
-      'entrevista_socios': 'Entrevista Sócios',
-      'aprovado': 'Aprovado',
-      'reprovado': 'Reprovado',
+      'reprovado_case': 'Reprovado na Etapa do Case',
+      'entrevista_tecnica': 'Entrevista Técnica Agendada',
+      'entrevista_socios': 'Entrevista com Sócios Agendada',
+      'aprovado': 'Aprovado no Processo',
+      'reprovado': 'Processo Finalizado',
       'contratado': 'Contratado',
     }
     return labels[status] || status

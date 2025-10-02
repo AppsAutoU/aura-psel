@@ -40,52 +40,75 @@ export default function AvaliadorDashboard() {
   })
 
   useEffect(() => {
-    checkAuth()
     loadCandidatos()
   }, [])
 
-  const checkAuth = async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      router.push('/auth/login')
-      return
+  // Get case link based on job title
+  const getCaseLink = (vagaTitulo: string): string => {
+    const titulo = vagaTitulo.toLowerCase()
+
+    if (titulo.includes('product designer') || titulo.includes('designer') || titulo.includes('po')) {
+      return 'https://www.notion.so/autou-digital/Case-Pr-tico-AutoU-Product-Designer-PO-20d36ce78e5580a5a8f7ce7693d4bfce'
     }
+
+    if (titulo.includes('desenvolvedor') || titulo.includes('developer') || titulo.includes('frontend') || titulo.includes('backend')) {
+      return 'https://www.notion.so/autou-digital/Case-Pr-tico-AutoU-Desenvolvimento-18836ce78e5580d0b59bcf9610b27769'
+    }
+
+    if (titulo.includes('consultor') || titulo.includes('negócio') || titulo.includes('business')) {
+      return 'https://www.notion.so/autou-digital/Case-Pr-tico-AutoU-Consultoria-1ff36ce78e5580f5a410c5393d227bfe'
+    }
+
+    // Default to development case
+    return 'https://www.notion.so/autou-digital/Case-Pr-tico-AutoU-Desenvolvimento-18836ce78e5580d0b59bcf9610b27769'
   }
 
   const loadCandidatos = async () => {
-    const supabase = createClient()
-    
-    const { data, error } = await supabase
-      .from('candidatos')
-      .select(`
-        *,
-        vagas!inner(titulo)
-      `)
-      .in('status', ['case_enviado', 'em_avaliacao_case'])
-      .eq('case_enviado', true)
-      .order('data_envio_case', { ascending: true })
+    try {
+      console.log('Starting to load candidates...')
+      const supabase = createClient()
 
-    if (!error && data) {
-      const candidatosFormatados = data.map(c => ({
-        id: c.id,
-        nome_completo: c.nome_completo,
-        email: c.email,
-        vaga_id: c.vaga_id,
-        vaga_titulo: (c.vagas as any).titulo,
-        status: c.status,
-        case_enviado: c.case_enviado,
-        case_url: c.case_url,
-        case_descricao: c.case_descricao,
-        nota_media_case: c.nota_media_case,
-        total_avaliacoes: c.total_avaliacoes,
-        score_ia: c.score_ia,
-      }))
-      setCandidatos(candidatosFormatados)
+      // Show all candidates, not just those with specific status
+      const { data, error } = await supabase
+        .from('aura_jobs_candidatos')
+        .select(`
+          *,
+          vaga:aura_jobs_vagas!vaga_id(titulo)
+        `)
+        .order('created_at', { ascending: false })
+
+      console.log('Candidates loaded:', data?.length, 'Error:', error)
+
+      if (error) {
+        console.error('Error loading candidates:', error)
+      }
+
+      if (data) {
+        const candidatosFormatados = data.map(c => {
+          const vagaTitulo = (c.vaga as any)?.titulo || 'Vaga não encontrada'
+          return {
+            id: c.id,
+            nome_completo: c.nome_completo,
+            email: c.email,
+            vaga_id: c.vaga_id,
+            vaga_titulo: vagaTitulo,
+            status: c.status,
+            case_enviado: c.status === 'case_enviado' || c.status === 'em_avaliacao_case',
+            case_url: getCaseLink(vagaTitulo), // Use job-specific case link
+            case_descricao: 'Aguardando Resposta do Candidato',
+            nota_media_case: null,
+            total_avaliacoes: 0,
+            score_ia: c.score_ia,
+          }
+        })
+        console.log('Formatted candidates:', candidatosFormatados.length)
+        setCandidatos(candidatosFormatados)
+      }
+    } catch (err) {
+      console.error('Exception in loadCandidatos:', err)
+    } finally {
+      setLoading(false)
     }
-    
-    setLoading(false)
   }
 
   const handleAvaliacaoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -101,17 +124,14 @@ export default function AvaliadorDashboard() {
 
   const handleSubmitAvaliacao = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!selectedCandidato) return
-    
+
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) return
 
     const avaliacaoData = {
       candidato_id: selectedCandidato.id,
-      avaliador_id: user.id,
+      avaliador_id: 'admin', // Placeholder since we don't have user auth here
       vaga_id: selectedCandidato.vaga_id,
       nota_tecnica: avaliacao.nota_tecnica ? parseFloat(avaliacao.nota_tecnica) : null,
       nota_soft_skills: avaliacao.nota_soft_skills ? parseFloat(avaliacao.nota_soft_skills) : null,
@@ -135,11 +155,10 @@ export default function AvaliadorDashboard() {
       // Atualizar status do candidato se necessário
       if (avaliacao.recomenda_aprovar) {
         await supabase
-          .from('candidatos')
-          .update({ 
+          .from('aura_jobs_candidatos')
+          .update({
             status: 'aprovado_case',
-            fase_atual: 'entrevista_tecnica',
-            aprovado_case: true
+            fase_atual: 'entrevista_tecnica'
           })
           .eq('id', selectedCandidato.id)
       }
@@ -163,9 +182,7 @@ export default function AvaliadorDashboard() {
   }
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/auth/login')
+    router.push('/')
   }
 
   if (loading) {
@@ -219,7 +236,9 @@ export default function AvaliadorDashboard() {
                     <p className="text-sm text-gray-500 mb-3">Vaga: {candidato.vaga_titulo}</p>
                     
                     <div className="flex gap-4 text-sm">
-                      <span>Score IA: {candidato.score_ia}/10</span>
+                      <span>
+                        Score IA: {candidato.score_ia ? `${candidato.score_ia}/10` : 'Aguardando Avaliação'}
+                      </span>
                       <span>Avaliações: {candidato.total_avaliacoes}</span>
                       {candidato.nota_media_case && (
                         <span>Nota Média: {candidato.nota_media_case.toFixed(1)}/10</span>

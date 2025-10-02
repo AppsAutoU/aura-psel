@@ -34,6 +34,21 @@ interface AprovacaoFinalData {
   proximosPassos: string
 }
 
+interface AprovacaoIAData {
+  nome: string
+  vagaTitulo: string
+  score: number
+  prazoCase: string
+  linkCase: string
+}
+
+interface ReprovacaoIAData {
+  nome: string
+  vagaTitulo: string
+  score: number
+  feedback: string
+}
+
 export const emailTemplates = {
   candidaturaConfirmacao: (data: CandidaturaConfirmacaoData) => ({
     subject: `Confirmação de Candidatura - ${data.vagaTitulo}`,
@@ -647,6 +662,256 @@ export const emailTemplates = {
             </p>
             <p style="margin-top: 20px; font-size: 12px;">
               © ${new Date().getFullYear()} AutoU. Todos os direitos reservados.
+            </p>
+          </div>
+        </body>
+      </html>
+    `
+  }),
+
+  aprovacaoIA: (data: AprovacaoIAData) => ({
+    subject: `🎉 Parabéns! Você foi aprovado na análise IA - ${data.vagaTitulo}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .header {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 30px;
+              border-radius: 10px 10px 0 0;
+              text-align: center;
+            }
+            .content {
+              background: white;
+              padding: 30px;
+              border: 1px solid #e2e8f0;
+              border-radius: 0 0 10px 10px;
+            }
+            .score-box {
+              background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+              border-radius: 10px;
+              padding: 20px;
+              margin: 20px 0;
+              text-align: center;
+              color: white;
+            }
+            .score {
+              font-size: 48px;
+              font-weight: bold;
+              margin: 10px 0;
+            }
+            .alert-box {
+              background: #fffaf0;
+              border: 2px solid #f6ad55;
+              padding: 15px;
+              margin: 20px 0;
+              border-radius: 8px;
+              text-align: center;
+            }
+            .button {
+              display: inline-block;
+              background: #667eea;
+              color: white;
+              padding: 12px 30px;
+              border-radius: 6px;
+              text-decoration: none;
+              font-weight: 600;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              text-align: center;
+              color: #718096;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 style="margin: 0;">🎉 Você foi Aprovado!</h1>
+          </div>
+          <div class="content">
+            <p>Olá <strong>${data.nome}</strong>,</p>
+
+            <p>Temos ótimas notícias! Nossa análise inteligente avaliou seu perfil e <strong>você foi aprovado</strong> para prosseguir no processo seletivo da vaga <strong>${data.vagaTitulo}</strong>!</p>
+
+            <div class="score-box">
+              <p style="margin: 0; font-size: 18px;">Seu Score de Compatibilidade</p>
+              <div class="score">${Math.round(data.score * 10)}%</div>
+              <p style="margin: 0; opacity: 0.9;">(${data.score}/10)</p>
+            </div>
+
+            <p>Seu perfil demonstrou excelente alinhamento com os requisitos da vaga. Parabéns! 🎊</p>
+
+            <h3>🎯 Próxima Etapa: Case Prático</h3>
+
+            <p>Você avançou para a fase do <strong>Case Prático</strong>, onde poderá demonstrar suas habilidades técnicas na prática.</p>
+
+            <div class="alert-box">
+              <h3 style="margin: 0 0 10px 0; color: #c05621;">⏰ Prazo de Entrega</h3>
+              <p style="margin: 0; font-size: 18px; font-weight: bold;">${data.prazoCase}</p>
+            </div>
+
+            <h3>📝 Instruções:</h3>
+            <ol>
+              <li>Clique no botão abaixo para acessar o case prático</li>
+              <li>Leia atentamente todas as instruções</li>
+              <li>Desenvolva sua solução com atenção aos detalhes</li>
+              <li>Envie sua resposta dentro do prazo estabelecido</li>
+            </ol>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${data.linkCase}" class="button" style="font-size: 16px; padding: 15px 40px;">
+                📄 Acessar Case Prático
+              </a>
+            </div>
+
+            <p style="text-align: center; font-size: 14px; color: #718096;">
+              Link do case: <a href="${data.linkCase}" style="color: #667eea;">${data.linkCase}</a>
+            </p>
+
+            <p><strong>💡 Dicas importantes:</strong></p>
+            <ul>
+              <li>Leia todas as instruções cuidadosamente</li>
+              <li>Foque na qualidade da solução</li>
+              <li>Documente seu raciocínio</li>
+              <li>Teste antes de enviar</li>
+            </ul>
+
+            <p>Estamos ansiosos para ver sua solução! Boa sorte! 🚀</p>
+          </div>
+          <div class="footer">
+            <p>
+              Em caso de dúvidas, entre em contato: <a href="mailto:rh@aura.com.br">rh@aura.com.br</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 12px;">
+              © ${new Date().getFullYear()} Aura. Todos os direitos reservados.
+            </p>
+          </div>
+        </body>
+      </html>
+    `
+  }),
+
+  reprovacaoIA: (data: ReprovacaoIAData) => ({
+    subject: `Processo Seletivo - ${data.vagaTitulo}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .header {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 30px;
+              border-radius: 10px 10px 0 0;
+              text-align: center;
+            }
+            .content {
+              background: white;
+              padding: 30px;
+              border: 1px solid #e2e8f0;
+              border-radius: 0 0 10px 10px;
+            }
+            .info-box {
+              background: #f7fafc;
+              border-left: 4px solid #667eea;
+              padding: 15px;
+              margin: 20px 0;
+              border-radius: 4px;
+            }
+            .button {
+              display: inline-block;
+              background: #667eea;
+              color: white;
+              padding: 12px 30px;
+              border-radius: 6px;
+              text-decoration: none;
+              font-weight: 600;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              text-align: center;
+              color: #718096;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 style="margin: 0;">Processo Seletivo - Atualização</h1>
+          </div>
+          <div class="content">
+            <p>Olá <strong>${data.nome}</strong>,</p>
+
+            <p>Agradecemos imensamente seu interesse em fazer parte do time Aura e pelo tempo dedicado ao nosso processo seletivo para a vaga de <strong>${data.vagaTitulo}</strong>.</p>
+
+            <p>Após uma análise cuidadosa de seu perfil, infelizmente, <strong>não poderemos prosseguir</strong> com sua candidatura neste momento. Esta decisão foi baseada em uma avaliação criteriosa que considera múltiplos fatores de compatibilidade com a posição.</p>
+
+            <div class="info-box">
+              <h3 style="margin: 0 0 10px 0; color: #2d3748;">📊 Feedback da Avaliação</h3>
+              <p style="margin: 0;">${data.feedback}</p>
+            </div>
+
+            <p><strong>Isso não é o fim!</strong> Queremos que você saiba que:</p>
+            <ul>
+              <li>Esta decisão não reflete sua competência profissional</li>
+              <li>Processos seletivos são complexos e envolvem diversos critérios</li>
+              <li>Incentivamos você a se candidatar a outras vagas que possam se alinhar melhor ao seu perfil</li>
+              <li>Seu currículo permanecerá em nosso banco de talentos para futuras oportunidades</li>
+            </ul>
+
+            <h3>🚀 Continue Crescendo:</h3>
+            <p>Aproveite este momento como uma oportunidade de crescimento:</p>
+            <ul>
+              <li>Continue desenvolvendo suas habilidades técnicas</li>
+              <li>Busque novos projetos e experiências</li>
+              <li>Mantenha-se atualizado com as tendências do mercado</li>
+              <li>Não desista de seus objetivos profissionais</li>
+            </ul>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL}/candidato/vagas" class="button">
+                Ver Outras Vagas Abertas
+              </a>
+            </div>
+
+            <p>Desejamos muito sucesso em sua jornada profissional e esperamos que nossos caminhos possam se cruzar novamente no futuro!</p>
+
+            <p>
+              Atenciosamente,<br>
+              <strong>Equipe Aura</strong>
+            </p>
+          </div>
+          <div class="footer">
+            <p>
+              Em caso de dúvidas, entre em contato: <a href="mailto:rh@aura.com.br">rh@aura.com.br</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 12px;">
+              © ${new Date().getFullYear()} Aura. Todos os direitos reservados.
             </p>
           </div>
         </body>

@@ -69,14 +69,18 @@ export function CandidatoDashboard({ user }: DashboardProps) {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { variant: any, text: string }> = {
-      'inscrito': { variant: 'info', text: 'Inscrito' },
-      'em_avaliacao_ia': { variant: 'warning', text: 'Em Avaliação' },
-      'case_enviado': { variant: 'info', text: 'Case Enviado' },
-      'em_avaliacao_case': { variant: 'warning', text: 'Case em Análise' },
-      'entrevista_tecnica': { variant: 'cosmic', text: 'Entrevista Técnica' },
-      'entrevista_socios': { variant: 'cosmic', text: 'Entrevista Sócios' },
-      'aprovado': { variant: 'success', text: 'Aprovado' },
-      'reprovado': { variant: 'error', text: 'Não Aprovado' },
+      'inscrito': { variant: 'info', text: 'Inscrição Recebida' },
+      'em_avaliacao_ia': { variant: 'warning', text: 'Em Avaliação pela IA' },
+      'reprovado_ia': { variant: 'error', text: 'Reprovado pelo Teste IA' },
+      'aprovado_ia': { variant: 'success', text: 'Aprovado pelo Teste IA' },
+      'case_enviado': { variant: 'info', text: 'Case Prático Enviado' },
+      'em_avaliacao_case': { variant: 'warning', text: 'Case em Avaliação' },
+      'aprovado_case': { variant: 'success', text: 'Case Aprovado' },
+      'reprovado_case': { variant: 'error', text: 'Reprovado na Etapa do Case' },
+      'entrevista_tecnica': { variant: 'cosmic', text: 'Entrevista Técnica Agendada' },
+      'entrevista_socios': { variant: 'cosmic', text: 'Entrevista com Sócios Agendada' },
+      'aprovado': { variant: 'success', text: 'Aprovado no Processo' },
+      'reprovado': { variant: 'error', text: 'Processo Finalizado' },
       'contratado': { variant: 'success', text: 'Contratado' }
     }
     const statusInfo = statusMap[status] || { variant: 'default', text: status }

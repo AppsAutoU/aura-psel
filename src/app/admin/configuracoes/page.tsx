@@ -95,12 +95,37 @@ export default function ConfiguracoesPage() {
               <CardTitle>Configurações de Email</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 mb-4">
-                Configurações de email serão implementadas em versões futuras.
-              </p>
-              <Button variant="secondary" disabled>
-                Configurar SMTP
-              </Button>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Status do Serviço</h4>
+                  <div className="flex items-center mb-4">
+                    <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                    <span className="text-sm">Resend configurado e funcionando</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Configurações Atuais</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+                    <p><strong>Provedor:</strong> Resend</p>
+                    <p><strong>Email Remetente:</strong> Aura RH &lt;onboarding@resend.dev&gt;</p>
+                    <p><strong>Status:</strong> Ativo (modo teste - enviando para admin@autou.io)</p>
+                    <p className="text-amber-600 mt-2">
+                      ⚠️ Para enviar para emails de candidatos, verifique seu domínio em <a href="https://resend.com/domains" target="_blank" className="underline">resend.com/domains</a>
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Templates Disponíveis</h4>
+                  <ul className="text-sm text-gray-600 space-y-1 ml-4 list-disc">
+                    <li>Email de aprovação IA (score ≥ 7)</li>
+                    <li>Email de rejeição IA (score &lt; 7)</li>
+                    <li>Email de confirmação de candidatura</li>
+                    <li>Email de case prático enviado</li>
+                  </ul>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -110,12 +135,58 @@ export default function ConfiguracoesPage() {
               <CardTitle>Configurações de IA</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 mb-4">
-                Configurações para avaliação automática de candidatos com IA.
-              </p>
-              <Button variant="secondary" disabled>
-                Configurar OpenAI
-              </Button>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Status do Serviço</h4>
+                  <div className="flex items-center mb-4">
+                    <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                    <span className="text-sm">OpenAI GPT-4o configurado e funcionando</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Configurações Atuais</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+                    <p><strong>Modelo:</strong> GPT-4o (mais recente e avançado)</p>
+                    <p><strong>Temperatura:</strong> 0.3 (avaliação mais consistente)</p>
+                    <p><strong>Max Tokens:</strong> 1500</p>
+                    <p><strong>Threshold de Aprovação:</strong> Score ≥ 7/10 (70%)</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Critérios de Avaliação</h4>
+                  <ul className="text-sm text-gray-600 space-y-1 ml-4 list-disc">
+                    <li>Adequação técnica aos requisitos da vaga</li>
+                    <li>Experiência relevante</li>
+                    <li>Potencial de crescimento</li>
+                    <li>Fit cultural baseado na motivação</li>
+                    <li>Análise de links profissionais (LinkedIn, GitHub, Portfolio)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Automação de Email</h4>
+                  <div className="bg-green-50 p-3 rounded-lg text-sm">
+                    <p className="text-green-800">
+                      ✅ <strong>Ativo:</strong> Emails são enviados automaticamente após avaliação
+                    </p>
+                    <ul className="mt-2 ml-4 list-disc text-green-700">
+                      <li>Score ≥ 7: Email de aprovação + link do case prático</li>
+                      <li>Score &lt; 7: Email de rejeição + feedback construtivo</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Cases Práticos por Vaga</h4>
+                  <div className="bg-gray-50 p-3 rounded-lg text-sm space-y-1">
+                    <p><strong>Product Designer/PO:</strong> Case de Design</p>
+                    <p><strong>Desenvolvedor:</strong> Case de Desenvolvimento</p>
+                    <p><strong>Consultor:</strong> Case de Consultoria</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 

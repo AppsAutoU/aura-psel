@@ -74,16 +74,17 @@ function StatusPageContent() {
   const getStatusText = (status: string) => {
     const texts: Record<string, string> = {
       inscrito: 'Inscrição Recebida',
-      em_avaliacao_ia: 'Em Avaliação (IA)',
-      reprovado_ia: 'Não Aprovado - Avaliação Inicial',
-      case_enviado: 'Case Enviado',
+      em_avaliacao_ia: 'Em Avaliação pela IA',
+      reprovado_ia: 'Reprovado pelo Teste IA',
+      aprovado_ia: 'Aprovado pelo Teste IA',
+      case_enviado: 'Case Prático Enviado',
       em_avaliacao_case: 'Case em Avaliação',
       aprovado_case: 'Case Aprovado',
-      reprovado_case: 'Não Aprovado - Case',
-      entrevista_tecnica: 'Agendado - Entrevista Técnica',
-      entrevista_socios: 'Agendado - Entrevista com Sócios',
-      aprovado: 'Aprovado',
-      reprovado: 'Não Aprovado',
+      reprovado_case: 'Reprovado na Etapa do Case',
+      entrevista_tecnica: 'Entrevista Técnica Agendada',
+      entrevista_socios: 'Entrevista com Sócios Agendada',
+      aprovado: 'Aprovado no Processo',
+      reprovado: 'Processo Finalizado',
       contratado: 'Contratado',
     }
     return texts[status] || status
@@ -279,6 +280,7 @@ function StatusPageContent() {
                 title="Avaliação Inicial (IA)"
                 completed={['case_pratico', 'avaliacao_case', 'entrevista_tecnica', 'entrevista_socios', 'contratacao'].includes(candidato.fase_atual) || candidato.status.includes('reprovado')}
                 active={candidato.fase_atual === 'avaliacao_ia'}
+                rejected={candidato.status === 'reprovado_ia'}
               />
               <ProcessStep
                 title="Case Prático"
@@ -341,17 +343,21 @@ export default function StatusPage() {
   )
 }
 
-function ProcessStep({ title, completed, active }: { title: string; completed: boolean; active: boolean }) {
+function ProcessStep({ title, completed, active, rejected }: { title: string; completed: boolean; active: boolean; rejected?: boolean }) {
   return (
     <div className="flex items-center gap-4 p-3 rounded-lg transition-all duration-300 hover:bg-neutral-50">
       <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-        completed 
-          ? 'bg-green-500 text-white shadow-md' 
-          : active 
-          ? 'bg-gradient-cosmic text-white shadow-lg' 
+        rejected
+          ? 'bg-red-500 text-white shadow-md'
+          : completed
+          ? 'bg-green-500 text-white shadow-md'
+          : active
+          ? 'bg-gradient-cosmic text-white shadow-lg'
           : 'bg-neutral-200 text-neutral-500'
       }`}>
-        {completed ? (
+        {rejected ? (
+          <AlertCircle className="h-5 w-5" />
+        ) : completed ? (
           <CheckCircle className="h-5 w-5" />
         ) : active ? (
           <Clock className="h-5 w-5" />
@@ -360,15 +366,22 @@ function ProcessStep({ title, completed, active }: { title: string; completed: b
         )}
       </div>
       <span className={`text-body ${
-        active 
-          ? 'font-semibold text-neutral-900' 
-          : completed 
-          ? 'text-neutral-700' 
+        rejected
+          ? 'text-red-700 font-semibold'
+          : active
+          ? 'font-semibold text-neutral-900'
+          : completed
+          ? 'text-neutral-700'
           : 'text-neutral-500'
       }`}>
         {title}
       </span>
-      {active && (
+      {rejected && (
+        <Badge variant="error" className="ml-auto text-xs">
+          Não Aprovado
+        </Badge>
+      )}
+      {active && !rejected && (
         <Badge variant="cosmic" className="ml-auto text-xs">
           Atual
         </Badge>

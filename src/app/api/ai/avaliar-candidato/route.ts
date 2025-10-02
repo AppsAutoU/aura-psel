@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
+import { sendEmail } from '@/lib/email/resend'
+import { emailTemplates } from '@/lib/email/templates'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -8,56 +10,103 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
+    // Validar chave da OpenAI
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_openai_api_key') {
+      console.error('OPENAI_API_KEY não configurada corretamente')
+      return NextResponse.json({
+        error: 'Chave da API OpenAI não configurada',
+        details: 'Configure OPENAI_API_KEY no arquivo .env.local'
+      }, { status: 500 })
+    }
+
     const { candidato_id } = await request.json()
-    
+
     if (!candidato_id) {
       return NextResponse.json({ error: 'candidato_id is required' }, { status: 400 })
     }
 
     const supabase = await createClient()
-    
+
     // Buscar dados do candidato
-    const { data: candidato, error } = await supabase
-      .from('candidatos')
-      .select('*, vagas!inner(titulo, descricao, requisitos)')
+    const { data: candidato, error: candidatoError } = await supabase
+      .from('aura_jobs_candidatos')
+      .select('*')
       .eq('id', candidato_id)
       .single()
 
-    if (error || !candidato) {
-      return NextResponse.json({ error: 'Candidato não encontrado' }, { status: 404 })
+    if (candidatoError || !candidato) {
+      console.error('Erro ao buscar candidato:', candidatoError)
+      return NextResponse.json({
+        error: 'Candidato não encontrado',
+        details: candidatoError?.message
+      }, { status: 404 })
+    }
+
+    // Buscar dados da vaga separadamente
+    let vaga = null
+    if (candidato.vaga_id) {
+      const { data: vagaData, error: vagaError } = await supabase
+        .from('aura_jobs_vagas')
+        .select('titulo, descricao, requisitos')
+        .eq('id', candidato.vaga_id)
+        .single()
+
+      if (vagaError) {
+        console.error('Erro ao buscar vaga:', vagaError)
+      } else {
+        vaga = vagaData
+      }
     }
 
     // Atualizar status para em avaliação
     await supabase
-      .from('candidatos')
-      .update({ 
+      .from('aura_jobs_candidatos')
+      .update({
         status: 'em_avaliacao_ia',
         fase_atual: 'avaliacao_ia'
       })
       .eq('id', candidato_id)
 
+    // Preparar informações de links profissionais
+    const linksInfo = []
+    if (candidato.linkedin) {
+      linksInfo.push(`- LinkedIn: ${candidato.linkedin}`)
+    }
+    if (candidato.github) {
+      linksInfo.push(`- GitHub: ${candidato.github}`)
+    }
+    if (candidato.portfolio) {
+      linksInfo.push(`- Portfolio: ${candidato.portfolio}`)
+    }
+
     // Preparar contexto para a IA
     const prompt = `
-    Você é um recrutador experiente avaliando um candidato para a vaga de "${candidato.vagas.titulo}" na AutoU.
-    
-    Descrição da vaga: ${candidato.vagas.descricao}
-    Requisitos: ${candidato.vagas.requisitos}
-    
+    Você é um recrutador experiente avaliando um candidato para a vaga de "${vaga?.titulo || 'Sem título'}" na Aura.
+
+    Descrição da vaga: ${vaga?.descricao || 'Não informada'}
+    Requisitos: ${vaga?.requisitos ? JSON.stringify(vaga.requisitos) : 'Não informados'}
+
     Informações do candidato:
     - Nome: ${candidato.nome_completo}
     - Email: ${candidato.email}
-    - Formação: ${candidato.curso_graduacao} em ${candidato.faculdade} (${candidato.status_graduacao})
-    - Experiência: ${candidato.tempo_experiencia_total || 0} meses como ${candidato.cargo_atual} em ${candidato.empresa_atual}
-    - Competências Técnicas: ${candidato.competencias_tecnicas}
-    - Linguagens: ${candidato.linguagens_programacao}
-    - Frameworks: ${candidato.frameworks_bibliotecas}
-    - Nível de Inglês: ${candidato.nivel_ingles}
-    - Experiência Relevante: ${candidato.experiencia_relevante}
-    - Projetos: ${candidato.principais_projetos}
-    - Motivação: ${candidato.motivacao_vaga}
-    
-    Currículo:
-    ${candidato.curriculo_texto}
+    - Formação: ${candidato.nivel_escolaridade || 'Não informada'} - ${candidato.curso || ''} (${candidato.instituicao || ''})
+    - Experiência: ${candidato.experiencia_anos || 0} anos como ${candidato.cargo_atual || 'Não informado'} em ${candidato.empresa_atual || 'Não informada'}
+    - Skills: ${candidato.principais_skills || 'Não informado'}
+    - Cidade: ${candidato.cidade || 'Não informada'}, ${candidato.estado || ''}
+    - Motivação: ${candidato.motivacao || 'Não informada'}
+    - Disponibilidade: ${candidato.disponibilidade || 'Não informada'}
+    - Salário pretendido: ${candidato.salario_pretendido ? `R$ ${candidato.salario_pretendido}` : 'Não informado'}
+
+    Links Profissionais (IMPORTANTE: Acesse e analise estes links para obter mais informações):
+    ${linksInfo.length > 0 ? linksInfo.join('\n    ') : '- Nenhum link fornecido'}
+
+    ${linksInfo.length > 0 ? `
+    INSTRUÇÕES IMPORTANTES:
+    - Acesse o perfil do LinkedIn para verificar histórico profissional, recomendações, certificações e conexões
+    - Analise o GitHub para avaliar qualidade do código, projetos, frequência de commits e tecnologias usadas
+    - Revise o portfolio para entender trabalhos anteriores, design, e capacidade técnica
+    - Use estas informações adicionais para complementar sua avaliação
+    ` : ''}
     
     Avalie o candidato considerando:
     1. Adequação técnica aos requisitos da vaga
@@ -77,11 +126,11 @@ export async function POST(request: NextRequest) {
     `
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: "Você é um recrutador experiente que avalia candidatos de forma justa e criteriosa."
+          content: "Você é um recrutador experiente que avalia candidatos de forma justa e criteriosa. Quando fornecido com URLs de perfis profissionais (LinkedIn, GitHub, Portfolio), você deve considerar essas informações na sua avaliação, extraindo insights sobre experiência, habilidades técnicas, projetos e recomendações."
         },
         {
           role: "user",
@@ -90,7 +139,7 @@ export async function POST(request: NextRequest) {
       ],
       response_format: { type: "json_object" },
       temperature: 0.3,
-      max_tokens: 1000,
+      max_tokens: 1500,
     })
 
     const analise = JSON.parse(completion.choices[0].message.content || '{}')
@@ -109,7 +158,7 @@ export async function POST(request: NextRequest) {
 
     // Atualizar candidato com resultado
     await supabase
-      .from('candidatos')
+      .from('aura_jobs_candidatos')
       .update({
         score_ia: analise.score,
         analise_ia_completa: analise,
@@ -119,19 +168,86 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', candidato_id)
 
-    // Se aprovado, enviar notificação com link do case
-    if (analise.score >= 7) {
-      await supabase
-        .from('notificacoes')
-        .insert({
-          candidato_id: candidato_id,
-          tipo: 'aprovacao_ia',
-          assunto: 'Parabéns! Você passou para a próxima fase',
-          conteudo: `Olá ${candidato.nome_completo}! Você foi aprovado na primeira fase do processo seletivo. Acesse a plataforma para enviar seu case prático. Prazo: ${new Date(prazoCase!).toLocaleDateString('pt-BR')}.`,
-          email_destinatario: candidato.email
+    // Enviar email baseado no resultado
+    try {
+      // Resend free tier only allows sending to verified email
+      const emailDestino = 'admin@autou.io'
+
+      if (analise.score >= 7) {
+        // APROVADO: Enviar email de aprovação
+        const prazoFormatado = prazoCase
+          ? new Date(prazoCase).toLocaleDateString('pt-BR', {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          : 'A definir'
+
+        // Determinar link do case baseado no título da vaga
+        const getCaseLink = (vagaTitulo: string): string => {
+          const titulo = vagaTitulo.toLowerCase()
+
+          // Product Designer ou PO
+          if (titulo.includes('product designer') || titulo.includes('designer') || titulo.includes('po') || titulo.includes('product owner')) {
+            return 'https://www.notion.so/autou-digital/Case-Pr-tico-AutoU-Product-Designer-PO-20d36ce78e5580a5a8f7ce7693d4bfce'
+          }
+
+          // Desenvolvedor (Frontend, Backend, Full Stack, etc)
+          if (titulo.includes('desenvolvedor') || titulo.includes('developer') || titulo.includes('frontend') || titulo.includes('backend') || titulo.includes('full stack')) {
+            return 'https://www.notion.so/autou-digital/Case-Pr-tico-AutoU-Desenvolvimento-18836ce78e5580d0b59bcf9610b27769'
+          }
+
+          // Consultor de Negócios
+          if (titulo.includes('consultor') || titulo.includes('negócio') || titulo.includes('negocio') || titulo.includes('business')) {
+            return 'https://www.notion.so/autou-digital/Case-Pr-tico-AutoU-Consultoria-1ff36ce78e5580f5a410c5393d227bfe'
+          }
+
+          // Default: link de desenvolvimento
+          return 'https://www.notion.so/autou-digital/Case-Pr-tico-AutoU-Desenvolvimento-18836ce78e5580d0b59bcf9610b27769'
+        }
+
+        const linkCase = getCaseLink(vaga?.titulo || '')
+
+        const emailData = emailTemplates.aprovacaoIA({
+          nome: candidato.nome_completo,
+          vagaTitulo: vaga?.titulo || 'Vaga',
+          score: analise.score,
+          prazoCase: prazoFormatado,
+          linkCase: linkCase
         })
-      
-      // Aqui você integraria com o serviço de email real
+
+        await sendEmail({
+          to: emailDestino,
+          subject: `[Para: ${candidato.email}] ${emailData.subject}`,
+          html: emailData.html
+        })
+
+        console.log(`✅ Email de aprovação enviado para ${emailDestino} (candidato: ${candidato.email})`)
+      } else {
+        // REPROVADO: Enviar email de rejeição
+        const feedbackText = analise.justificativa ||
+          'Após análise detalhada, identificamos que seu perfil não atende completamente aos requisitos específicos desta vaga no momento.'
+
+        const emailData = emailTemplates.reprovacaoIA({
+          nome: candidato.nome_completo,
+          vagaTitulo: vaga?.titulo || 'Vaga',
+          score: analise.score,
+          feedback: feedbackText
+        })
+
+        await sendEmail({
+          to: emailDestino,
+          subject: `[Para: ${candidato.email}] ${emailData.subject}`,
+          html: emailData.html
+        })
+
+        console.log(`📧 Email de rejeição enviado para ${emailDestino} (candidato: ${candidato.email})`)
+      }
+    } catch (emailError) {
+      // Não falhar a requisição se o email falhar
+      console.error('Erro ao enviar email:', emailError)
     }
 
     return NextResponse.json({ 
@@ -141,10 +257,15 @@ export async function POST(request: NextRequest) {
       analise 
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao avaliar candidato:', error)
+    const errorMessage = error?.message || error?.toString() || 'Erro ao processar avaliação'
     return NextResponse.json(
-      { error: 'Erro ao processar avaliação' },
+      {
+        error: 'Erro ao processar avaliação',
+        details: errorMessage,
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+      },
       { status: 500 }
     )
   }

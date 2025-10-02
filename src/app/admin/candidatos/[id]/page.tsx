@@ -23,11 +23,11 @@ interface Candidato {
   empresa_atual?: string
   cargo_atual?: string
   tempo_experiencia_total?: number
-  competencias_tecnicas?: string
+  principais_skills?: string
   linguagens_programacao?: string
   nivel_ingles?: string
-  pretensao_salarial?: number
-  disponibilidade_inicio?: string
+  salario_pretendido?: number
+  disponibilidade?: string
   score_ia?: number
   status: string
   vaga_id: string
@@ -37,6 +37,8 @@ interface Candidato {
   motivacao?: string
   desafios_tecnicos?: string
   comentarios_adicionais?: string
+  curriculo_url?: string
+  carta_apresentacao_url?: string
 }
 
 interface Vaga {
@@ -59,6 +61,9 @@ export default function CandidatoDetalhesPage() {
   const [loading, setLoading] = useState(true)
   const [notas, setNotas] = useState('')
   const [salvandoNotas, setSalvandoNotas] = useState(false)
+  const [curriculoUrl, setCurriculoUrl] = useState<string | null>(null)
+  const [cartaUrl, setCartaUrl] = useState<string | null>(null)
+  const [avaliandoIA, setAvaliandoIA] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -83,14 +88,58 @@ export default function CandidatoDetalhesPage() {
       if (candidatoData) {
         setCandidato(candidatoData)
         setNotas(candidatoData.comentarios_adicionais || '')
-        
+
+        // Generate signed URLs for documents
+        console.log('Curriculo URL from DB:', candidatoData.curriculo_url)
+        console.log('Carta URL from DB:', candidatoData.carta_apresentacao_url)
+
+        if (candidatoData.curriculo_url) {
+          // Try to get a signed URL for private bucket
+          const { data: signedData, error: signedError } = await supabase.storage
+            .from('candidatos')
+            .createSignedUrl(candidatoData.curriculo_url, 3600)
+
+          if (signedError) {
+            console.error('Error creating signed URL for curriculo:', signedError)
+            // Fallback to public URL
+            const { data } = supabase.storage
+              .from('candidatos')
+              .getPublicUrl(candidatoData.curriculo_url)
+            setCurriculoUrl(data.publicUrl)
+            console.log('Using public URL for curriculo:', data.publicUrl)
+          } else {
+            setCurriculoUrl(signedData.signedUrl)
+            console.log('Using signed URL for curriculo:', signedData.signedUrl)
+          }
+        }
+
+        if (candidatoData.carta_apresentacao_url) {
+          // Try to get a signed URL for private bucket
+          const { data: signedData, error: signedError } = await supabase.storage
+            .from('candidatos')
+            .createSignedUrl(candidatoData.carta_apresentacao_url, 3600)
+
+          if (signedError) {
+            console.error('Error creating signed URL for carta:', signedError)
+            // Fallback to public URL
+            const { data } = supabase.storage
+              .from('candidatos')
+              .getPublicUrl(candidatoData.carta_apresentacao_url)
+            setCartaUrl(data.publicUrl)
+            console.log('Using public URL for carta:', data.publicUrl)
+          } else {
+            setCartaUrl(signedData.signedUrl)
+            console.log('Using signed URL for carta:', signedData.signedUrl)
+          }
+        }
+
         if (candidatoData.vaga_id) {
           const { data: vagaData, error: vagaError } = await supabase
             .from('aura_jobs_vagas')
             .select('id, titulo, departamento, tipo_contrato, modelo_trabalho')
             .eq('id', candidatoData.vaga_id)
             .single()
-          
+
           if (!vagaError && vagaData) {
             setVaga(vagaData)
           }
@@ -143,9 +192,9 @@ export default function CandidatoDetalhesPage() {
         .from('aura_jobs_candidatos')
         .update({ comentarios_adicionais: notas })
         .eq('id', candidatoId)
-      
+
       if (error) throw error
-      
+
       addToast({
         type: 'success',
         title: 'Notas salvas',
@@ -160,6 +209,44 @@ export default function CandidatoDetalhesPage() {
       })
     } finally {
       setSalvandoNotas(false)
+    }
+  }
+
+  const avaliarComIA = async () => {
+    setAvaliandoIA(true)
+    try {
+      const response = await fetch('/api/ai/avaliar-candidato', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidato_id: candidatoId })
+      })
+
+      const data = await response.json()
+      console.log('AI Response:', data)
+
+      if (!response.ok) {
+        const errorMsg = data.details || data.error || 'Erro ao avaliar candidato'
+        console.error('API Error:', data)
+        throw new Error(errorMsg)
+      }
+
+      addToast({
+        type: 'success',
+        title: 'Avaliação concluída',
+        message: `Score: ${data.score}/10 - Status: ${data.status}`
+      })
+
+      // Recarregar dados
+      await loadData()
+    } catch (error: any) {
+      console.error('Erro ao avaliar candidato:', error)
+      addToast({
+        type: 'error',
+        title: 'Erro na Avaliação IA',
+        message: error.message || 'Erro ao processar avaliação da IA.'
+      })
+    } finally {
+      setAvaliandoIA(false)
     }
   }
 
@@ -262,6 +349,20 @@ export default function CandidatoDetalhesPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={avaliarComIA}
+              disabled={avaliandoIA}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {avaliandoIA ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Avaliando...
+                </>
+              ) : (
+                'Avaliar com IA'
+              )}
+            </button>
             <span className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(candidato.status)}`}>
               {getStatusLabel(candidato.status)}
             </span>
@@ -357,10 +458,10 @@ export default function CandidatoDetalhesPage() {
             <div className="bg-white rounded-xl border border-gray-200/60 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Competências</h2>
               <div className="space-y-4">
-                {candidato.competencias_tecnicas && (
+                {candidato.principais_skills && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Competências Técnicas</label>
-                    <p className="text-gray-900 mt-1">{candidato.competencias_tecnicas}</p>
+                    <label className="text-sm font-medium text-gray-500">Principais Skills</label>
+                    <p className="text-gray-900 mt-1">{candidato.principais_skills}</p>
                   </div>
                 )}
                 {candidato.linguagens_programacao && (
@@ -432,6 +533,38 @@ export default function CandidatoDetalhesPage() {
               </div>
             </div>
 
+            {/* Documentos */}
+            <div className="bg-white rounded-xl border border-gray-200/60 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Documentos</h2>
+              <div className="space-y-3">
+                {curriculoUrl && (
+                  <a
+                    href={curriculoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-blue-600 hover:underline"
+                  >
+                    <span>Currículo</span>
+                    <span>→</span>
+                  </a>
+                )}
+                {cartaUrl && (
+                  <a
+                    href={cartaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-blue-600 hover:underline"
+                  >
+                    <span>Carta de Apresentação</span>
+                    <span>→</span>
+                  </a>
+                )}
+                {!curriculoUrl && !cartaUrl && (
+                  <p className="text-gray-500 text-sm">Nenhum documento enviado</p>
+                )}
+              </div>
+            </div>
+
             {/* Informações Salariais */}
             <div className="bg-white rounded-xl border border-gray-200/60 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Informações Salariais</h2>
@@ -439,15 +572,15 @@ export default function CandidatoDetalhesPage() {
                 <div>
                   <label className="text-sm font-medium text-gray-500">Pretensão Salarial</label>
                   <p className="text-gray-900 font-medium">
-                    {candidato.pretensao_salarial 
-                      ? `R$ ${candidato.pretensao_salarial.toLocaleString('pt-BR')}`
+                    {candidato.salario_pretendido
+                      ? `R$ ${candidato.salario_pretendido.toLocaleString('pt-BR')}`
                       : 'Não informado'}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Disponibilidade</label>
                   <p className="text-gray-900">
-                    {candidato.disponibilidade_inicio || 'Não informado'}
+                    {candidato.disponibilidade || 'Não informado'}
                   </p>
                 </div>
               </div>
@@ -460,9 +593,10 @@ export default function CandidatoDetalhesPage() {
                 <div className="flex items-center justify-center">
                   <div className="text-center">
                     <div className="text-4xl font-bold text-blue-600">
-                      {candidato.score_ia}%
+                      {Math.round(candidato.score_ia * 10)}%
                     </div>
                     <p className="text-sm text-gray-500 mt-1">Score de Compatibilidade</p>
+                    <p className="text-xs text-gray-400 mt-1">{candidato.score_ia}/10</p>
                   </div>
                 </div>
               </div>

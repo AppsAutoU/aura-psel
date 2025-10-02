@@ -93,17 +93,18 @@ export default function CandidaturasPage() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { variant: any, text: string }> = {
-      'inscrito': { variant: 'info', text: 'Inscrito' },
-      'em_avaliacao_ia': { variant: 'warning', text: 'Em Avaliação' },
-      'reprovado_ia': { variant: 'error', text: 'Não Aprovado' },
-      'case_enviado': { variant: 'info', text: 'Case Enviado' },
-      'em_avaliacao_case': { variant: 'warning', text: 'Case em Análise' },
+      'inscrito': { variant: 'info', text: 'Inscrição Recebida' },
+      'em_avaliacao_ia': { variant: 'warning', text: 'Em Avaliação pela IA' },
+      'reprovado_ia': { variant: 'error', text: 'Reprovado pelo Teste IA' },
+      'aprovado_ia': { variant: 'success', text: 'Aprovado pelo Teste IA' },
+      'case_enviado': { variant: 'info', text: 'Case Prático Enviado' },
+      'em_avaliacao_case': { variant: 'warning', text: 'Case em Avaliação' },
       'aprovado_case': { variant: 'success', text: 'Case Aprovado' },
-      'reprovado_case': { variant: 'error', text: 'Case Reprovado' },
-      'entrevista_tecnica': { variant: 'cosmic', text: 'Entrevista Técnica' },
-      'entrevista_socios': { variant: 'cosmic', text: 'Entrevista Sócios' },
-      'aprovado': { variant: 'success', text: 'Aprovado' },
-      'reprovado': { variant: 'error', text: 'Não Aprovado' },
+      'reprovado_case': { variant: 'error', text: 'Reprovado na Etapa do Case' },
+      'entrevista_tecnica': { variant: 'cosmic', text: 'Entrevista Técnica Agendada' },
+      'entrevista_socios': { variant: 'cosmic', text: 'Entrevista com Sócios Agendada' },
+      'aprovado': { variant: 'success', text: 'Aprovado no Processo' },
+      'reprovado': { variant: 'error', text: 'Processo Finalizado' },
       'contratado': { variant: 'success', text: 'Contratado' }
     }
     const statusInfo = statusMap[status] || { variant: 'default', text: status }
@@ -113,16 +114,17 @@ export default function CandidaturasPage() {
   const getStatusText = (status: string) => {
     const texts: Record<string, string> = {
       'inscrito': 'Inscrição enviada com sucesso',
-      'em_avaliacao_ia': 'Perfil sendo analisado pela nossa IA',
-      'reprovado_ia': 'Perfil não atende aos requisitos da vaga',
+      'em_avaliacao_ia': 'Seu perfil está sendo analisado pela nossa IA',
+      'reprovado_ia': 'Seu perfil não atende aos requisitos da vaga neste momento',
+      'aprovado_ia': 'Perfil aprovado pela análise inicial',
       'case_enviado': 'Case prático disponível para resolução',
-      'em_avaliacao_case': 'Case sendo avaliado pela equipe técnica',
-      'aprovado_case': 'Case aprovado! Aguarde próximas etapas',
-      'reprovado_case': 'Case não atendeu aos critérios',
-      'entrevista_tecnica': 'Entrevista técnica agendada',
-      'entrevista_socios': 'Entrevista com sócios agendada',
-      'aprovado': 'Parabéns! Você foi aprovado',
-      'reprovado': 'Processo finalizado',
+      'em_avaliacao_case': 'Seu case está sendo avaliado pela equipe técnica',
+      'aprovado_case': 'Case aprovado! Aguarde as próximas etapas',
+      'reprovado_case': 'O case não atendeu aos critérios necessários',
+      'entrevista_tecnica': 'Sua entrevista técnica foi agendada',
+      'entrevista_socios': 'Sua entrevista com os sócios foi agendada',
+      'aprovado': 'Parabéns! Você foi aprovado no processo seletivo',
+      'reprovado': 'O processo seletivo foi finalizado',
       'contratado': 'Bem-vindo ao time!'
     }
     return texts[status] || 'Status em atualização'
