@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
-import { sendEmail } from '@/lib/email/resend'
+import { sendEmailWithNodemailer } from '@/lib/email/nodemailer'
 import { emailTemplates } from '@/lib/email/templates'
 
 const openai = new OpenAI({
@@ -170,8 +170,8 @@ export async function POST(request: NextRequest) {
 
     // Enviar email baseado no resultado
     try {
-      // Resend free tier only allows sending to verified email
-      const emailDestino = 'admin@autou.io'
+      // Now sending directly to candidate's email using nodemailer
+      const emailDestino = candidato.email
 
       if (analise.score >= 7) {
         // APROVADO: Enviar email de aprovação
@@ -218,13 +218,13 @@ export async function POST(request: NextRequest) {
           linkCase: linkCase
         })
 
-        await sendEmail({
+        await sendEmailWithNodemailer({
           to: emailDestino,
-          subject: `[Para: ${candidato.email}] ${emailData.subject}`,
+          subject: emailData.subject,
           html: emailData.html
         })
 
-        console.log(`✅ Email de aprovação enviado para ${emailDestino} (candidato: ${candidato.email})`)
+        console.log(`✅ Email de aprovação enviado para ${emailDestino}`)
       } else {
         // REPROVADO: Enviar email de rejeição
         const feedbackText = analise.justificativa ||
@@ -237,13 +237,13 @@ export async function POST(request: NextRequest) {
           feedback: feedbackText
         })
 
-        await sendEmail({
+        await sendEmailWithNodemailer({
           to: emailDestino,
-          subject: `[Para: ${candidato.email}] ${emailData.subject}`,
+          subject: emailData.subject,
           html: emailData.html
         })
 
-        console.log(`📧 Email de rejeição enviado para ${emailDestino} (candidato: ${candidato.email})`)
+        console.log(`📧 Email de rejeição enviado para ${emailDestino}`)
       }
     } catch (emailError) {
       // Não falhar a requisição se o email falhar

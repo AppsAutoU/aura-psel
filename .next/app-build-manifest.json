@@ -16,6 +16,11 @@
       "static/chunks/main-app.js",
       "static/chunks/app/admin/page.js"
     ],
+    "/admin/auth/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/auth/login/page.js"
+    ],
     "/admin/candidatos/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -26,70 +31,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/admin/candidatos/[id]/page.js"
     ],
-    "/admin/vagas/[id]/candidatos/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/vagas/[id]/candidatos/page.js"
-    ],
-    "/admin/usuarios/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/usuarios/page.js"
-    ],
     "/api/ai/avaliar-candidato/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/ai/avaliar-candidato/route.js"
-    ],
-    "/admin/vagas/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/vagas/page.js"
-    ],
-    "/admin/configuracoes/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/configuracoes/page.js"
-    ],
-    "/admin/auth/login/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/auth/login/page.js"
-    ],
-    "/avaliador/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/avaliador/page.js"
-    ],
-    "/candidato/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/candidato/page.js"
-    ],
-    "/candidato/auth/login/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/candidato/auth/login/page.js"
-    ],
-    "/candidato/vagas/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/candidato/vagas/page.js"
-    ],
-    "/candidato/vagas/[vaga_key]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/candidato/vagas/[vaga_key]/page.js"
-    ],
-    "/candidato/candidaturas/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/candidato/candidaturas/page.js"
-    ],
-    "/candidato/status/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/candidato/status/page.js"
     ]
   }
 }
