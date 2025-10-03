@@ -670,7 +670,7 @@ export const emailTemplates = {
   }),
 
   aprovacaoIA: (data: AprovacaoIAData) => ({
-    subject: `🎉 Parabéns! Você foi aprovado na análise IA - ${data.vagaTitulo}`,
+    subject: `🎉 Parabéns! Você foi aprovado - ${data.vagaTitulo}`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -697,19 +697,6 @@ export const emailTemplates = {
               padding: 30px;
               border: 1px solid #e2e8f0;
               border-radius: 0 0 10px 10px;
-            }
-            .score-box {
-              background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-              border-radius: 10px;
-              padding: 20px;
-              margin: 20px 0;
-              text-align: center;
-              color: white;
-            }
-            .score {
-              font-size: 48px;
-              font-weight: bold;
-              margin: 10px 0;
             }
             .alert-box {
               background: #fffaf0;
@@ -745,17 +732,11 @@ export const emailTemplates = {
           <div class="content">
             <p>Olá <strong>${data.nome}</strong>,</p>
 
-            <p>Temos ótimas notícias! Nossa análise inteligente avaliou seu perfil e <strong>você foi aprovado</strong> para prosseguir no processo seletivo da vaga <strong>${data.vagaTitulo}</strong>!</p>
+            <p>Temos ótimas notícias! Nossa análise avaliou seu perfil e <strong>você foi aprovado</strong> para prosseguir no processo seletivo da vaga <strong>${data.vagaTitulo}</strong>!</p>
 
-            <div class="score-box">
-              <p style="margin: 0; font-size: 18px;">Seu Score de Compatibilidade</p>
-              <div class="score">${Math.round(data.score * 10)}%</div>
-              <p style="margin: 0; opacity: 0.9;">(${data.score}/10)</p>
-            </div>
+            <p>Seu perfil demonstrou excelente alinhamento com os requisitos da vaga. Parabéns! 👏</p>
 
-            <p>Seu perfil demonstrou excelente alinhamento com os requisitos da vaga. Parabéns! 🎊</p>
-
-            <h3>🎯 Próxima Etapa: Case Prático</h3>
+            <h3>📋 Próxima Etapa: Case Prático</h3>
 
             <p>Você avançou para a fase do <strong>Case Prático</strong>, onde poderá demonstrar suas habilidades técnicas na prática.</p>
 
@@ -774,7 +755,7 @@ export const emailTemplates = {
 
             <div style="text-align: center; margin: 30px 0;">
               <a href="${data.linkCase}" class="button" style="font-size: 16px; padding: 15px 40px;">
-                📄 Acessar Case Prático
+                Acessar Case Prático
               </a>
             </div>
 
@@ -870,11 +851,6 @@ export const emailTemplates = {
             <p>Agradecemos imensamente seu interesse em fazer parte do time Aura e pelo tempo dedicado ao nosso processo seletivo para a vaga de <strong>${data.vagaTitulo}</strong>.</p>
 
             <p>Após uma análise cuidadosa de seu perfil, infelizmente, <strong>não poderemos prosseguir</strong> com sua candidatura neste momento. Esta decisão foi baseada em uma avaliação criteriosa que considera múltiplos fatores de compatibilidade com a posição.</p>
-
-            <div class="info-box">
-              <h3 style="margin: 0 0 10px 0; color: #2d3748;">📊 Feedback da Avaliação</h3>
-              <p style="margin: 0;">${data.feedback}</p>
-            </div>
 
             <p><strong>Isso não é o fim!</strong> Queremos que você saiba que:</p>
             <ul>

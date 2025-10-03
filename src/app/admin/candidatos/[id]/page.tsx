@@ -164,15 +164,43 @@ export default function CandidatoDetalhesPage() {
         .from('aura_jobs_candidatos')
         .update({ status })
         .eq('id', candidatoId)
-      
+
       if (error) throw error
-      
+
+      // Enviar email se for aprovação, reprovação ou envio de case manual
+      if (status === 'aprovado' || status === 'reprovado' || status === 'case_enviado') {
+        try {
+          let decisao = 'aprovado'
+          if (status === 'reprovado' || status === 'reprovado_ia' || status === 'reprovado_case') {
+            decisao = 'reprovado'
+          }
+
+          const response = await fetch('/api/admin/enviar-email-decisao', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              candidato_id: candidatoId,
+              decisao: decisao
+            })
+          })
+
+          if (!response.ok) {
+            console.error('Erro ao enviar email de decisão')
+          } else {
+            console.log(`Email de ${decisao} enviado com sucesso`)
+          }
+        } catch (emailError) {
+          console.error('Erro ao enviar email:', emailError)
+          // Não falhar a atualização de status se o email falhar
+        }
+      }
+
       addToast({
         type: 'success',
         title: 'Status atualizado',
         message: 'O status do candidato foi atualizado com sucesso.'
       })
-      
+
       loadData()
     } catch (error) {
       console.error('Erro ao atualizar status:', error)

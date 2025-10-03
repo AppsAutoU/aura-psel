@@ -26,6 +26,7 @@ interface Vaga {
   vagas_disponiveis: number
   vaga_key: string
   ativa: boolean
+  prazo_case_dias?: number // Prazo do case em dias após aprovação (D+N)
   created_at: string
   created_by?: string
 }
@@ -60,6 +61,7 @@ export default function VagasPage() {
     requisitos: '',
     beneficios: '',
     vagas_disponiveis: '1',
+    prazo_case_dias: '5', // Padrão: 5 dias (D+5)
   })
 
   useEffect(() => {
@@ -129,6 +131,7 @@ export default function VagasPage() {
       requisitos: vaga.requisitos || '',
       beneficios: vaga.beneficios || '',
       vagas_disponiveis: vaga.vagas_disponiveis.toString(),
+      prazo_case_dias: vaga.prazo_case_dias?.toString() || '5',
     })
     setShowModal(true)
   }
@@ -147,6 +150,7 @@ export default function VagasPage() {
       requisitos: '',
       beneficios: '',
       vagas_disponiveis: '1',
+      prazo_case_dias: '5',
     })
     setShowModal(true)
   }
@@ -174,6 +178,7 @@ export default function VagasPage() {
         salario_min: formData.salario_min ? parseFloat(formData.salario_min) : null,
         salario_max: formData.salario_max ? parseFloat(formData.salario_max) : null,
         vagas_disponiveis: parseInt(formData.vagas_disponiveis) || 1,
+        prazo_case_dias: parseInt(formData.prazo_case_dias) || 5,
       }
 
       let result
@@ -216,6 +221,7 @@ export default function VagasPage() {
         requisitos: '',
         beneficios: '',
         vagas_disponiveis: '1',
+        prazo_case_dias: '5',
       })
     } catch (error: any) {
       console.error('Erro ao salvar vaga:', error)
@@ -582,7 +588,30 @@ export default function VagasPage() {
                     className="w-full px-3 py-2 border rounded-md"
                   />
                 </div>
-                
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Prazo do Case Prático (dias)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      name="prazo_case_dias"
+                      min="1"
+                      max="30"
+                      value={formData.prazo_case_dias}
+                      onChange={handleChange}
+                      className="w-24 px-3 py-2 border rounded-md focus:ring-2 focus:ring-violet-500"
+                    />
+                    <span className="text-sm text-gray-600">
+                      dias após aprovação
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    ℹ️ Candidatos terão este prazo para completar o case após serem aprovados pela IA. Padrão: 5 dias (D+5)
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium mb-1">Salário Mínimo</label>
                   <input

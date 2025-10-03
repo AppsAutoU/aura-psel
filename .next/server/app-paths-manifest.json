@@ -1,8 +1,9 @@
 {
-  "/api/ai/avaliar-candidato/route": "app/api/ai/avaliar-candidato/route.js",
-  "/page": "app/page.js",
-  "/admin/page": "app/admin/page.js",
+  "/candidato/page": "app/candidato/page.js",
+  "/admin/usuarios/page": "app/admin/usuarios/page.js",
   "/admin/auth/login/page": "app/admin/auth/login/page.js",
-  "/admin/candidatos/page": "app/admin/candidatos/page.js",
-  "/admin/candidatos/[id]/page": "app/admin/candidatos/[id]/page.js"
+  "/avaliador/auth/login/page": "app/avaliador/auth/login/page.js",
+  "/avaliador/page": "app/avaliador/page.js",
+  "/admin/vagas/page": "app/admin/vagas/page.js",
+  "/admin/page": "app/admin/page.js"
 }

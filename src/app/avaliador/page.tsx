@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useAvaliadorAuth } from '@/hooks/useAvaliadorAuth'
 import Link from 'next/link'
 
 interface CandidatoParaAvaliar {
@@ -22,6 +23,7 @@ interface CandidatoParaAvaliar {
 
 export default function AvaliadorDashboard() {
   const router = useRouter()
+  const { user, loading: authLoading, logout } = useAvaliadorAuth()
   const [loading, setLoading] = useState(true)
   const [candidatos, setCandidatos] = useState<CandidatoParaAvaliar[]>([])
   const [selectedCandidato, setSelectedCandidato] = useState<CandidatoParaAvaliar | null>(null)
@@ -39,9 +41,18 @@ export default function AvaliadorDashboard() {
     recomenda_entrevista: false,
   })
 
+  // Redirect if not authenticated
   useEffect(() => {
-    loadCandidatos()
-  }, [])
+    if (!authLoading && !user) {
+      router.push('/avaliador/auth/login')
+    }
+  }, [authLoading, user, router])
+
+  useEffect(() => {
+    if (user) {
+      loadCandidatos()
+    }
+  }, [user])
 
   // Get case link based on job title
   const getCaseLink = (vagaTitulo: string): string => {
@@ -182,14 +193,28 @@ export default function AvaliadorDashboard() {
   }
 
   const handleLogout = async () => {
-    router.push('/')
+    await logout()
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">Carregando...</h1>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null
   }
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Carregando...</h1>
+          <h1 className="text-2xl font-bold">Carregando candidatos...</h1>
         </div>
       </div>
     )
@@ -203,7 +228,10 @@ export default function AvaliadorDashboard() {
             <h1 className="text-3xl font-bold text-gray-900">
               Portal Avaliador
             </h1>
-            <div className="flex gap-4">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">
+                Olá, {user.nome}
+              </span>
               <Link href="/" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
                 Início
               </Link>
