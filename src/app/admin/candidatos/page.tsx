@@ -266,7 +266,7 @@ export default function CandidatosPage() {
                         <strong>Experiência:</strong> {candidato.experiencia_anos || 0} anos
                       </div>
                       <div>
-                        <strong>Score IA:</strong> {candidato.score_ia ? `${candidato.score_ia}/100` : 'N/A'}
+                        <strong>Score IA:</strong> {candidato.score_ia ? `${candidato.score_ia}/10` : 'N/A'}
                       </div>
                       <div>
                         <strong>Inscrição:</strong> {format(new Date(candidato.data_inscricao), 'dd/MM/yyyy', { locale: ptBR })}

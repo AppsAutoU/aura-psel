@@ -621,10 +621,9 @@ export default function CandidatoDetalhesPage() {
                 <div className="flex items-center justify-center">
                   <div className="text-center">
                     <div className="text-4xl font-bold text-blue-600">
-                      {Math.round(candidato.score_ia * 10)}%
+                      {candidato.score_ia}/10
                     </div>
                     <p className="text-sm text-gray-500 mt-1">Score de Compatibilidade</p>
-                    <p className="text-xs text-gray-400 mt-1">{candidato.score_ia}/10</p>
                   </div>
                 </div>
               </div>
