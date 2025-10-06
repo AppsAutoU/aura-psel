@@ -129,6 +129,25 @@ export default function CasesPraticosPage() {
         return
       }
 
+      // Enviar e-mail de aprovação do case
+      try {
+        await fetch('/api/emails/send-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: selectedCandidato.email,
+            type: 'aprovacaoCase',
+            data: {
+              nome: selectedCandidato.nome_completo,
+              vagaTitulo: selectedCandidato.vaga_titulo
+            }
+          })
+        })
+      } catch (emailError) {
+        console.error('Erro ao enviar e-mail:', emailError)
+        // Não bloqueia o fluxo se o e-mail falhar
+      }
+
       alert('Candidato aprovado para entrevista técnica!')
       setSelectedCandidato(null)
       setAvaliacao({
@@ -165,6 +184,25 @@ export default function CasesPraticosPage() {
       if (error) {
         alert('Erro ao atualizar candidato: ' + error.message)
         return
+      }
+
+      // Enviar e-mail de reprovação do case
+      try {
+        await fetch('/api/emails/send-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: selectedCandidato.email,
+            type: 'reprovacaoCase',
+            data: {
+              nome: selectedCandidato.nome_completo,
+              vagaTitulo: selectedCandidato.vaga_titulo
+            }
+          })
+        })
+      } catch (emailError) {
+        console.error('Erro ao enviar e-mail:', emailError)
+        // Não bloqueia o fluxo se o e-mail falhar
       }
 
       alert('Candidato reprovado no case.')

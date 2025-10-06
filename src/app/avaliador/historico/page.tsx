@@ -85,11 +85,11 @@ export default function HistoricoPage() {
       'em_avaliacao_case': { label: 'Em Avaliação', color: 'bg-blue-100 text-blue-800 border-blue-200', fase: 'Case Prático' },
       'aprovado_case': { label: 'Aprovado', color: 'bg-green-100 text-green-800 border-green-200', fase: 'Case Prático' },
       'reprovado_case': { label: 'Reprovado', color: 'bg-red-100 text-red-800 border-red-200', fase: 'Case Prático' },
-      'entrevista_tecnica': { label: 'Em Entrevista', color: 'bg-purple-100 text-purple-800 border-purple-200', fase: 'Entrevista Técnica' },
-      'aprovado_entrevista': { label: 'Aprovado', color: 'bg-green-100 text-green-800 border-green-200', fase: 'Entrevista Técnica' },
-      'reprovado_entrevista': { label: 'Reprovado', color: 'bg-red-100 text-red-800 border-red-200', fase: 'Entrevista Técnica' },
-      'aprovado_final': { label: 'Aprovado Final', color: 'bg-emerald-100 text-emerald-800 border-emerald-200', fase: 'Processo Finalizado' },
-      'reprovado_final': { label: 'Reprovado Final', color: 'bg-gray-100 text-gray-800 border-gray-200', fase: 'Processo Finalizado' }
+      'entrevista_tecnica': { label: 'Em Entrevista Técnica', color: 'bg-purple-100 text-purple-800 border-purple-200', fase: 'Entrevista Técnica' },
+      'entrevista_socios': { label: 'Marcar Entrevista Com Sócio', color: 'bg-indigo-100 text-indigo-800 border-indigo-200', fase: 'Entrevista com Sócios' },
+      'reprovado': { label: 'Reprovado', color: 'bg-red-100 text-red-800 border-red-200', fase: 'Processo Seletivo' },
+      'reprovado_socios': { label: 'Reprovado Pelos Sócios', color: 'bg-red-100 text-red-800 border-red-200', fase: 'Entrevista com Sócios' },
+      'contratado': { label: 'Contratado', color: 'bg-emerald-100 text-emerald-800 border-emerald-200', fase: 'Contratação' }
     }
 
     return statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-800 border-gray-200', fase: 'Desconhecida' }

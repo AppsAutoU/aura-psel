@@ -14,6 +14,7 @@ interface Vaga {
   id: string
   titulo: string
   departamento?: string
+  prazo_case_dias?: number
 }
 
 interface Candidato {
@@ -74,19 +75,146 @@ export default function CandidatosPage() {
     }
     
     if (!vagasRes.error && vagasRes.data) {
+      console.log('📚 Vagas carregadas:', vagasRes.data.map(v => ({
+        titulo: v.titulo,
+        prazo_case_dias: v.prazo_case_dias
+      })))
       setVagas(vagasRes.data)
     }
-    
+
     setLoading(false)
   }
 
-  const updateCandidatoStatus = async (candidatoId: string, status: string) => {
+  const updateCandidatoStatus = async (candidatoId: string, novoStatus: string) => {
     const supabase = createClient()
-    await supabase
+
+    // 1. Encontrar candidato nos dados já carregados
+    const candidato = candidatos.find(c => c.id === candidatoId)
+
+    if (!candidato) {
+      console.error('❌ Candidato não encontrado')
+      alert('Erro: candidato não encontrado')
+      return
+    }
+
+    // 2. Encontrar vaga nos dados já carregados
+    const vaga = vagas.find(v => v.id === candidato.vaga_id)
+
+    console.log('📋 Candidato encontrado:', candidato.nome_completo, candidato.email)
+    console.log('📋 Vaga encontrada:', vaga?.titulo)
+    console.log('📋 Objeto vaga completo:', vaga)
+    console.log('📋 Prazo case (vaga?.prazo_case_dias):', vaga?.prazo_case_dias)
+    console.log('📋 Status atual:', candidato.status, '→ Novo status:', novoStatus)
+
+    // 3. Atualizar status
+    const { error: updateError } = await supabase
       .from('aura_jobs_candidatos')
-      .update({ status })
+      .update({ status: novoStatus })
       .eq('id', candidatoId)
-    
+
+    if (updateError) {
+      console.error('❌ Erro ao atualizar status:', updateError)
+      alert('Erro ao atualizar status do candidato')
+      return
+    }
+
+    console.log('✅ Status atualizado com sucesso')
+
+    // 3. Enviar e-mail baseado no status
+    let emailType = null
+    let emailData: any = {}
+
+    const vagaTitulo = vaga?.titulo || 'a vaga'
+    const prazoCaseDias = vaga?.prazo_case_dias || 7
+
+    switch(novoStatus) {
+      case 'reprovado_ia':
+        emailType = 'reprovacaoIA'
+        emailData = {
+          nome: candidato.nome_completo,
+          vagaTitulo,
+          score: candidato.score_ia || 0,
+          feedback: 'Seu perfil não atendeu os requisitos mínimos para esta vaga.'
+        }
+        break
+
+      case 'case_enviado':
+        emailType = 'aprovacaoIA'
+        emailData = {
+          nome: candidato.nome_completo,
+          vagaTitulo,
+          score: candidato.score_ia || 0,
+          prazoCase: `${prazoCaseDias} dias`,
+          linkCase: `https://autou.com.br/candidato/case/${candidatoId}`
+        }
+        break
+
+      case 'aprovado_case':
+        emailType = 'aprovacaoCase'
+        emailData = {
+          nome: candidato.nome_completo,
+          vagaTitulo
+        }
+        break
+
+      case 'reprovado_case':
+        emailType = 'reprovacaoCase'
+        emailData = {
+          nome: candidato.nome_completo,
+          vagaTitulo
+        }
+        break
+
+      case 'contratado':
+        emailType = 'aprovacaoContratacao'
+        emailData = {
+          nome: candidato.nome_completo,
+          vagaTitulo,
+          proximosPassos: 'Em breve nossa equipe de RH entrará em contato com você para discutir os próximos passos da sua contratação.'
+        }
+        break
+
+      case 'reprovado_socios':
+        emailType = 'reprovacaoSocios'
+        emailData = {
+          nome: candidato.nome_completo,
+          vagaTitulo
+        }
+        break
+    }
+
+    // 4. Enviar e-mail se houver tipo definido
+    if (emailType) {
+      console.log(`📧 Preparando e-mail de ${emailType} para ${candidato.email}`)
+      console.log('📧 Dados do e-mail:', emailData)
+
+      try {
+        const response = await fetch('/api/emails/send-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: candidato.email,
+            type: emailType,
+            data: emailData
+          })
+        })
+
+        const result = await response.json()
+
+        if (response.ok) {
+          console.log(`✅ E-mail de ${emailType} enviado com sucesso para ${candidato.email}`)
+          console.log('✅ Resposta da API:', result)
+        } else {
+          console.error('❌ Erro na resposta da API:', result)
+        }
+      } catch (error) {
+        console.error('❌ Erro ao enviar e-mail:', error)
+        // Não bloqueia o fluxo se e-mail falhar
+      }
+    } else {
+      console.log(`ℹ️ Nenhum e-mail configurado para o status: ${novoStatus}`)
+    }
+
     loadData()
   }
 
@@ -101,8 +229,8 @@ export default function CandidatosPage() {
       'reprovado_case': 'bg-red-100 text-red-800',
       'entrevista_tecnica': 'bg-indigo-100 text-indigo-800',
       'entrevista_socios': 'bg-pink-100 text-pink-800',
-      'aprovado': 'bg-green-100 text-green-800',
       'reprovado': 'bg-red-100 text-red-800',
+      'reprovado_socios': 'bg-red-100 text-red-800',
       'contratado': 'bg-emerald-100 text-emerald-800',
     }
     return colors[status] || 'bg-gray-100 text-gray-800'
@@ -119,9 +247,9 @@ export default function CandidatosPage() {
       'aprovado_case': 'Case Aprovado',
       'reprovado_case': 'Reprovado na Etapa do Case',
       'entrevista_tecnica': 'Entrevista Técnica Agendada',
-      'entrevista_socios': 'Entrevista com Sócios Agendada',
-      'aprovado': 'Aprovado no Processo',
-      'reprovado': 'Processo Finalizado',
+      'entrevista_socios': 'Marcar Entrevista Com Sócio',
+      'reprovado': 'Reprovado',
+      'reprovado_socios': 'Reprovado Pelos Sócios',
       'contratado': 'Contratado',
     }
     return labels[status] || status
@@ -232,7 +360,7 @@ export default function CandidatosPage() {
         {/* Lista de Candidatos */}
         <div className="space-y-4">
           {candidatosFiltrados.map((candidato) => (
-            <Card key={candidato.id} variant="clean">
+            <Card key={candidato.id} variant="clean" className={candidato.status === 'entrevista_socios' ? 'border-l-4 border-l-pink-500 bg-pink-50/30' : ''}>
               <CardContent>
                 <div className="flex justify-between items-start">
                   <div className="flex-1">

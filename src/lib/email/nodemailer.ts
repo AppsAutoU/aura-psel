@@ -19,7 +19,7 @@ interface EmailOptions {
 
 export async function sendEmailWithNodemailer({ to, subject, html, from }: EmailOptions) {
   try {
-    const fromAddress = from || process.env.EMAIL_FROM || `Aura RH <${process.env.EMAIL_USER}>`
+    const fromAddress = from || process.env.EMAIL_FROM || `AutoU <${process.env.EMAIL_USER}>`
 
     console.log(`📤 Tentando enviar email para: ${to}`)
     console.log(`📤 From: ${fromAddress}`)

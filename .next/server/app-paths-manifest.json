@@ -1,7 +1,7 @@
 {
-  "/avaliador/entrevistas/page": "app/avaliador/entrevistas/page.js",
-  "/admin/page": "app/admin/page.js",
+  "/candidato/page": "app/candidato/page.js",
+  "/admin/candidatos/page": "app/admin/candidatos/page.js",
   "/avaliador/historico/page": "app/avaliador/historico/page.js",
-  "/avaliador/page": "app/avaliador/page.js",
-  "/admin/candidatos/page": "app/admin/candidatos/page.js"
+  "/avaliador/entrevistas/page": "app/avaliador/entrevistas/page.js",
+  "/avaliador/page": "app/avaliador/page.js"
 }

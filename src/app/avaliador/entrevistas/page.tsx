@@ -89,8 +89,8 @@ export default function EntrevistasPage() {
       const { error } = await supabase
         .from('aura_jobs_candidatos')
         .update({
-          status: 'aprovado_entrevista',
-          fase_atual: 'aprovado_entrevista'
+          status: 'entrevista_socios',
+          fase_atual: 'entrevista_socios'
         })
         .eq('id', selectedCandidato.id)
 
@@ -99,7 +99,29 @@ export default function EntrevistasPage() {
         return
       }
 
-      alert('Candidato aprovado na entrevista técnica!')
+      // Enviar e-mail de aprovação da entrevista técnica
+      try {
+        await fetch('/api/emails/send-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: selectedCandidato.email,
+            type: 'aprovacaoEntrevistaTecnica',
+            data: {
+              nome: selectedCandidato.nome_completo,
+              vagaTitulo: selectedCandidato.vaga && typeof selectedCandidato.vaga === 'object' && 'titulo' in selectedCandidato.vaga
+                ? selectedCandidato.vaga.titulo
+                : 'a vaga'
+            }
+          })
+        })
+        console.log(`✅ E-mail de aprovação enviado para ${selectedCandidato.email}`)
+      } catch (emailError) {
+        console.error('❌ Erro ao enviar e-mail:', emailError)
+        // Não bloqueia o fluxo se e-mail falhar
+      }
+
+      alert('Candidato aprovado na entrevista técnica! Agora aguarda entrevista com sócios.')
       setShowModal(false)
       setSelectedCandidato(null)
       setObservacoes('')
@@ -123,14 +145,36 @@ export default function EntrevistasPage() {
       const { error } = await supabase
         .from('aura_jobs_candidatos')
         .update({
-          status: 'reprovado_entrevista',
-          fase_atual: 'reprovado_entrevista'
+          status: 'reprovado',
+          fase_atual: 'entrevista_tecnica'
         })
         .eq('id', selectedCandidato.id)
 
       if (error) {
         alert('Erro ao atualizar candidato: ' + error.message)
         return
+      }
+
+      // Enviar e-mail de reprovação da entrevista técnica
+      try {
+        await fetch('/api/emails/send-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: selectedCandidato.email,
+            type: 'reprovacaoEntrevistaTecnica',
+            data: {
+              nome: selectedCandidato.nome_completo,
+              vagaTitulo: selectedCandidato.vaga && typeof selectedCandidato.vaga === 'object' && 'titulo' in selectedCandidato.vaga
+                ? selectedCandidato.vaga.titulo
+                : 'a vaga'
+            }
+          })
+        })
+        console.log(`✅ E-mail de reprovação enviado para ${selectedCandidato.email}`)
+      } catch (emailError) {
+        console.error('❌ Erro ao enviar e-mail:', emailError)
+        // Não bloqueia o fluxo se e-mail falhar
       }
 
       alert('Candidato reprovado na entrevista técnica!')
