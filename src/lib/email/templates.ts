@@ -549,16 +549,7 @@ export const emailTemplates = {
               </div>
               ` : ''}
             </div>
-            
-            <h3>📝 Como se preparar:</h3>
-            <ul>
-              <li>Revise seu currículo e experiências relevantes</li>
-              <li>Pesquise sobre a AutoU e nossos valores</li>
-              <li>Prepare perguntas sobre a vaga e a empresa</li>
-              <li>Teste sua conexão e equipamentos (se for online)</li>
-              <li>Vista-se adequadamente, mesmo em entrevistas virtuais</li>
-            </ul>
-            
+
             <div style="text-align: center; margin: 30px 0;">
               <a href="https://autou.com.br/candidato/consulta" class="button">
                 Ver Detalhes Completos
@@ -1010,18 +1001,9 @@ export const emailTemplates = {
             <h3>📅 O que esperar:</h3>
             <ul>
               <li><strong>Formato:</strong> Conversa técnica com nossa equipe</li>
-              <li><strong>Duração:</strong> Aproximadamente 60 minutos</li>
+              <li><strong>Duração:</strong> Aproximadamente 15-30 minutos</li>
               <li><strong>Temas:</strong> Discussão sobre suas experiências, tecnologias e o case desenvolvido</li>
               <li><strong>Agendamento:</strong> Em breve entraremos em contato para agendar um horário</li>
-            </ul>
-
-            <h3>💡 Como se preparar:</h3>
-            <ul>
-              <li>Revise a solução que você desenvolveu no case prático</li>
-              <li>Prepare-se para explicar suas decisões técnicas</li>
-              <li>Pesquise sobre a AutoU e nossas tecnologias</li>
-              <li>Prepare perguntas sobre a vaga e o time</li>
-              <li>Teste sua conexão de internet e equipamentos</li>
             </ul>
 
             <div style="text-align: center; margin: 30px 0;">
@@ -1240,18 +1222,9 @@ export const emailTemplates = {
             <h3>📅 O que esperar:</h3>
             <ul>
               <li><strong>Formato:</strong> Conversa com os sócios da empresa</li>
-              <li><strong>Duração:</strong> Aproximadamente 45-60 minutos</li>
+              <li><strong>Duração:</strong> Aproximadamente 15-30 minutos</li>
               <li><strong>Temas:</strong> Visão de carreira, alinhamento cultural, expectativas mútuas</li>
               <li><strong>Agendamento:</strong> Em breve entraremos em contato para agendar</li>
-            </ul>
-
-            <h3>💡 Como se preparar:</h3>
-            <ul>
-              <li>Pesquise sobre a história e valores da AutoU</li>
-              <li>Prepare perguntas sobre a cultura da empresa</li>
-              <li>Reflita sobre seus objetivos de carreira</li>
-              <li>Pense em como você pode contribuir para a empresa</li>
-              <li>Vista-se adequadamente e seja pontual</li>
             </ul>
 
             <div style="text-align: center; margin: 30px 0;">

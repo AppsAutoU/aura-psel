@@ -5,6 +5,9 @@ import { AvaliadorLayout } from '@/components/avaliador/AvaliadorLayout'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 
 interface Candidato {
   id: string
@@ -209,60 +212,68 @@ export default function EntrevistasPage() {
   return (
     <AvaliadorLayout>
       <div className="p-6">
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold mb-2">Candidatos Na Entrevista Técnica</h2>
-          <p className="text-gray-600">Candidatos aprovados no case prático aguardando entrevista técnica</p>
+        <div className="mb-8">
+          <h2 className="text-heading-1 text-gradient-cosmic mb-2">Candidatos Na Entrevista Técnica</h2>
+          <p className="text-body text-neutral-600">Candidatos aprovados no case prático aguardando entrevista técnica</p>
         </div>
 
         {candidatos.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-600">Nenhum candidato aguardando entrevista técnica no momento.</p>
-          </div>
+          <Card variant="clean">
+            <CardContent className="text-center py-12">
+              <p className="text-neutral-500">Nenhum candidato aguardando entrevista técnica no momento.</p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {candidatos.map((candidato) => (
-              <div
+              <Card
                 key={candidato.id}
-                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200"
+                variant="clean"
+                className="hover-cosmic"
               >
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">{candidato.nome_completo}</h3>
-                  <p className="text-sm text-gray-600">{candidato.email}</p>
-                  {candidato.telefone && (
-                    <p className="text-sm text-gray-600">{candidato.telefone}</p>
-                  )}
-                </div>
+                <CardContent>
+                  <div className="mb-4">
+                    <h3 className="text-heading-3 mb-2">{candidato.nome_completo}</h3>
+                    <p className="text-body-small text-neutral-600">{candidato.email}</p>
+                    {candidato.telefone && (
+                      <p className="text-body-small text-neutral-600">{candidato.telefone}</p>
+                    )}
+                  </div>
 
-                <div className="mb-4">
-                  <p className="text-sm text-gray-700 mb-2">
-                    <strong>Vaga:</strong>{' '}
-                    {candidato.vaga && 'titulo' in candidato.vaga
-                      ? candidato.vaga.titulo
-                      : 'Não especificada'}
-                  </p>
-                  {candidato.score_ia && (
-                    <p className="text-sm text-gray-700">
-                      <strong>Score IA:</strong> {candidato.score_ia}/10
+                  <div className="mb-4 space-y-2">
+                    <p className="text-body-small">
+                      <strong className="text-neutral-700">Vaga:</strong>{' '}
+                      <span className="text-neutral-600">
+                        {candidato.vaga && 'titulo' in candidato.vaga
+                          ? candidato.vaga.titulo
+                          : 'Não especificada'}
+                      </span>
                     </p>
-                  )}
-                </div>
+                    {candidato.score_ia && (
+                      <p className="text-body-small">
+                        <strong className="text-neutral-700">Score IA:</strong>{' '}
+                        <span className="text-neutral-600">{candidato.score_ia}/10</span>
+                      </p>
+                    )}
+                  </div>
 
-                <div className="mb-4">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
-                    Aguardando Entrevista
-                  </span>
-                </div>
+                  <div className="mb-4">
+                    <Badge variant="default">
+                      Aguardando Entrevista
+                    </Badge>
+                  </div>
 
-                <button
-                  onClick={() => {
-                    setSelectedCandidato(candidato)
-                    setShowModal(true)
-                  }}
-                  className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-colors font-medium"
-                >
-                  Avaliar Entrevista
-                </button>
-              </div>
+                  <Button
+                    onClick={() => {
+                      setSelectedCandidato(candidato)
+                      setShowModal(true)
+                    }}
+                    className="w-full bg-gradient-cosmic hover-cosmic"
+                  >
+                    Avaliar Entrevista
+                  </Button>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
@@ -340,21 +351,25 @@ export default function EntrevistasPage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <button
+                  <Button
                     onClick={handleAprovar}
-                    className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                    variant="success"
+                    size="lg"
+                    className="flex-1"
                   >
                     Aprovar na Entrevista Técnica
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={handleReprovar}
-                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                    variant="destructive"
+                    size="lg"
+                    className="flex-1"
                   >
                     Reprovar na Entrevista Técnica
-                  </button>
+                  </Button>
                 </div>
 
-                <button
+                <Button
                   onClick={() => {
                     setShowModal(false)
                     setSelectedCandidato(null)
@@ -362,10 +377,11 @@ export default function EntrevistasPage() {
                     setDataEntrevista('')
                     setResponsavelEntrevista('')
                   }}
-                  className="w-full mt-3 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  variant="ghost"
+                  className="w-full mt-3"
                 >
                   Cancelar
-                </button>
+                </Button>
               </div>
             </div>
           </div>

@@ -7,6 +7,8 @@ import { useAdminAuth } from '@/hooks/useAdminAuth'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -106,26 +108,57 @@ export default function CandidatosPage() {
     console.log('📋 Prazo case (vaga?.prazo_case_dias):', vaga?.prazo_case_dias)
     console.log('📋 Status atual:', candidato.status, '→ Novo status:', novoStatus)
 
-    // 3. Atualizar status
-    const { error: updateError } = await supabase
-      .from('aura_jobs_candidatos')
-      .update({ status: novoStatus })
-      .eq('id', candidatoId)
+    // 3. Atualizar status via API (para contornar limitação do enum)
+    // Mapear 'reprovado_socios' para 'reprovado' no banco (email específico será enviado depois)
+    const statusParaBanco = novoStatus === 'reprovado_socios' ? 'reprovado' : novoStatus
 
-    if (updateError) {
-      console.error('❌ Erro ao atualizar status:', updateError)
-      alert('Erro ao atualizar status do candidato')
-      return
+    // Salvar no localStorage qual foi o tipo de reprovação (para distinguir depois)
+    if (novoStatus === 'reprovado_socios') {
+      const reprovacoesSocios = JSON.parse(localStorage.getItem('candidatos_reprovados_socios') || '{}')
+      reprovacoesSocios[candidatoId] = true
+      localStorage.setItem('candidatos_reprovados_socios', JSON.stringify(reprovacoesSocios))
+    } else if (novoStatus === 'reprovado') {
+      // Se mudou para "reprovado" genérico, remover do tracking de sócios
+      const reprovacoesSocios = JSON.parse(localStorage.getItem('candidatos_reprovados_socios') || '{}')
+      delete reprovacoesSocios[candidatoId]
+      localStorage.setItem('candidatos_reprovados_socios', JSON.stringify(reprovacoesSocios))
     }
 
-    console.log('✅ Status atualizado com sucesso')
+    try {
+      const response = await fetch('/api/admin/update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidatoId,
+          novoStatus: statusParaBanco
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Erro ao atualizar status')
+      }
+
+      console.log('✅ Status atualizado via API')
+    } catch (error: any) {
+      console.error('❌ Erro ao atualizar status:', error)
+      alert(`Erro ao atualizar status: ${error.message}`)
+      return
+    }
 
     // 3. Enviar e-mail baseado no status
     let emailType = null
     let emailData: any = {}
 
     const vagaTitulo = vaga?.titulo || 'a vaga'
-    const prazoCaseDias = vaga?.prazo_case_dias || 7
+
+    // Buscar prazo do case do localStorage (já que não existe na tabela do banco)
+    let prazoCaseDias = 7 // Padrão
+    if (typeof window !== 'undefined' && vaga?.id) {
+      const prazosCase = JSON.parse(localStorage.getItem('vagas_prazos_case') || '{}')
+      prazoCaseDias = prazosCase[vaga.id] || 7
+    }
 
     switch(novoStatus) {
       case 'reprovado_ia':
@@ -149,14 +182,6 @@ export default function CandidatosPage() {
         }
         break
 
-      case 'aprovado_case':
-        emailType = 'aprovacaoCase'
-        emailData = {
-          nome: candidato.nome_completo,
-          vagaTitulo
-        }
-        break
-
       case 'reprovado_case':
         emailType = 'reprovacaoCase'
         emailData = {
@@ -165,20 +190,49 @@ export default function CandidatosPage() {
         }
         break
 
+      case 'entrevista_tecnica':
+        // 6. Aguardando Entrevista Técnica (case aprovado)
+        emailType = 'aprovacaoCase'
+        emailData = {
+          nome: candidato.nome_completo,
+          vagaTitulo
+        }
+        break
+
+      case 'reprovado':
+        // 7. Reprovado na Entrevista Técnica
+        emailType = 'reprovacaoEntrevistaTecnica'
+        emailData = {
+          nome: candidato.nome_completo,
+          vagaTitulo
+        }
+        break
+
+      case 'entrevista_socios':
+        // 8. Aguardando Entrevista com Sócios (aprovado na técnica)
+        emailType = 'aprovacaoEntrevistaTecnica'
+        emailData = {
+          nome: candidato.nome_completo,
+          vagaTitulo
+        }
+        break
+
+      case 'reprovado_socios':
+        // 9. Reprovado na Entrevista com Sócios
+        emailType = 'reprovacaoSocios'
+        emailData = {
+          nome: candidato.nome_completo,
+          vagaTitulo
+        }
+        break
+
       case 'contratado':
+        // 10. Contratado (aprovado pelos sócios)
         emailType = 'aprovacaoContratacao'
         emailData = {
           nome: candidato.nome_completo,
           vagaTitulo,
           proximosPassos: 'Em breve nossa equipe de RH entrará em contato com você para discutir os próximos passos da sua contratação.'
-        }
-        break
-
-      case 'reprovado_socios':
-        emailType = 'reprovacaoSocios'
-        emailData = {
-          nome: candidato.nome_completo,
-          vagaTitulo
         }
         break
     }
@@ -218,38 +272,52 @@ export default function CandidatosPage() {
     loadData()
   }
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      'inscrito': 'bg-blue-100 text-blue-800',
-      'em_avaliacao_ia': 'bg-yellow-100 text-yellow-800',
-      'reprovado_ia': 'bg-red-100 text-red-800',
-      'case_enviado': 'bg-purple-100 text-purple-800',
-      'em_avaliacao_case': 'bg-orange-100 text-orange-800',
-      'aprovado_case': 'bg-green-100 text-green-800',
-      'reprovado_case': 'bg-red-100 text-red-800',
-      'entrevista_tecnica': 'bg-indigo-100 text-indigo-800',
-      'entrevista_socios': 'bg-pink-100 text-pink-800',
-      'reprovado': 'bg-red-100 text-red-800',
-      'reprovado_socios': 'bg-red-100 text-red-800',
-      'contratado': 'bg-emerald-100 text-emerald-800',
+  const getStatusVariant = (status: string) => {
+    const variants: Record<string, string> = {
+      // 🔴 Reprovações (tons de vermelho crescente por etapa)
+      'reprovado_ia': 'red-light',           // 3. Reprovado pela IA
+      'reprovado_case': 'red-medium',        // 5. Case Reprovado
+      'reprovado': 'red-dark',               // 7. Reprovado na Entrevista Técnica
+      'reprovado_socios': 'red-intense',     // 9. Reprovado na Entrevista com Sócios
+
+      // 🟢 Contratado (verde intenso - sucesso final)
+      'contratado': 'green-intense',         // 10. Contratado
+
+      // 🔵 Processos aguardando (azul)
+      'inscrito': 'blue-light',              // 1. Inscrito
+      'case_enviado': 'blue-medium',         // 4. Case Enviado
+      'entrevista_tecnica': 'violet',        // 6. Aguardando Entrevista Técnica
+      'entrevista_socios': 'pink',           // 8. Aguardando Entrevista com Sócios
+
+      // 🟡 Em processamento (amarelo)
+      'em_avaliacao_ia': 'yellow-light',     // 2. Em Avaliação IA
     }
-    return colors[status] || 'bg-gray-100 text-gray-800'
+
+    return variants[status] || 'secondary'
+  }
+
+  // Obter status real do candidato (considerando localStorage para reprovado_socios)
+  const getStatusReal = (candidatoId: string, statusDoBanco: string): string => {
+    if (statusDoBanco === 'reprovado') {
+      const reprovacoesSocios = JSON.parse(localStorage.getItem('candidatos_reprovados_socios') || '{}')
+      if (reprovacoesSocios[candidatoId]) {
+        return 'reprovado_socios'
+      }
+    }
+    return statusDoBanco
   }
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      'inscrito': 'Inscrição Recebida',
-      'em_avaliacao_ia': 'Em Avaliação pela IA',
-      'reprovado_ia': 'Reprovado pelo Teste IA',
-      'aprovado_ia': 'Aprovado pelo Teste IA',
-      'case_enviado': 'Case Prático Enviado',
-      'em_avaliacao_case': 'Case em Avaliação',
-      'aprovado_case': 'Case Aprovado',
-      'reprovado_case': 'Reprovado na Etapa do Case',
-      'entrevista_tecnica': 'Entrevista Técnica Agendada',
-      'entrevista_socios': 'Marcar Entrevista Com Sócio',
-      'reprovado': 'Reprovado',
-      'reprovado_socios': 'Reprovado Pelos Sócios',
+      'inscrito': 'Inscrito',
+      'em_avaliacao_ia': 'Em Avaliação IA',
+      'reprovado_ia': 'Reprovado pela IA',
+      'case_enviado': 'Case Enviado',
+      'reprovado_case': 'Case Reprovado',
+      'entrevista_tecnica': 'Aguardando Entrevista Técnica',
+      'reprovado': 'Reprovado na Entrevista Técnica',
+      'entrevista_socios': 'Aguardando Entrevista com Sócios',
+      'reprovado_socios': 'Reprovado na Entrevista com Sócios',
       'contratado': 'Contratado',
     }
     return labels[status] || status
@@ -288,12 +356,12 @@ export default function CandidatosPage() {
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold text-red-600">Acesso Negado</h1>
           <p className="text-gray-600">Você não tem permissão de administrador.</p>
-          <button 
-            onClick={() => router.push('/admin/auth/login')} 
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          <Button
+            onClick={() => router.push('/admin/auth/login')}
+            className="bg-gradient-cosmic hover-cosmic"
           >
             Fazer Login
-          </button>
+          </Button>
         </div>
       </div>
     )
@@ -303,9 +371,9 @@ export default function CandidatosPage() {
     <AdminLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Candidatos</h1>
-          <p className="text-gray-600 mt-1">
+        <div className="mb-8">
+          <h1 className="text-heading-1 text-gradient-cosmic mb-2">Candidatos</h1>
+          <p className="text-body text-neutral-600">
             {estatisticas.total} candidato{estatisticas.total !== 1 ? 's' : ''} no total
           </p>
         </div>
@@ -366,9 +434,9 @@ export default function CandidatosPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-3">
                       <h3 className="text-heading-3">{candidato.nome_completo}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(candidato.status)}`}>
-                        {getStatusLabel(candidato.status)}
-                      </span>
+                      <Badge variant={getStatusVariant(getStatusReal(candidato.id, candidato.status))}>
+                        {getStatusLabel(getStatusReal(candidato.id, candidato.status))}
+                      </Badge>
                     </div>
                     
                     <div className="mb-3">
@@ -411,30 +479,31 @@ export default function CandidatosPage() {
                   
                   <div className="flex flex-col gap-2 ml-4">
                     <select
-                      value={candidato.status}
+                      value={getStatusReal(candidato.id, candidato.status)}
                       onChange={(e) => updateCandidatoStatus(candidato.id, e.target.value)}
                       className="text-xs border rounded px-2 py-1"
                     >
                       <option value="inscrito">Inscrito</option>
                       <option value="em_avaliacao_ia">Em Avaliação IA</option>
-                      <option value="reprovado_ia">Reprovado IA</option>
+                      <option value="reprovado_ia">Reprovado pela IA</option>
                       <option value="case_enviado">Case Enviado</option>
-                      <option value="em_avaliacao_case">Avaliando Case</option>
-                      <option value="aprovado_case">Case Aprovado</option>
                       <option value="reprovado_case">Case Reprovado</option>
-                      <option value="entrevista_tecnica">Entrevista Técnica</option>
-                      <option value="entrevista_socios">Entrevista Sócios</option>
-                      <option value="aprovado">Aprovado</option>
-                      <option value="reprovado">Reprovado</option>
+                      <option value="entrevista_tecnica">Aguardando Entrevista Técnica</option>
+                      <option value="reprovado">Reprovado na Entrevista Técnica</option>
+                      <option value="entrevista_socios">Aguardando Entrevista com Sócios</option>
+                      <option value="reprovado_socios">Reprovado na Entrevista com Sócios</option>
                       <option value="contratado">Contratado</option>
                     </select>
                     
-                    <Link
-                      href={`/admin/candidatos/${candidato.id}`}
-                      className="btn-ghost text-xs py-1 px-2 text-center"
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
                     >
-                      Ver Detalhes
-                    </Link>
+                      <Link href={`/admin/candidatos/${candidato.id}`}>
+                        Ver Detalhes
+                      </Link>
+                    </Button>
                   </div>
                 </div>
               </CardContent>

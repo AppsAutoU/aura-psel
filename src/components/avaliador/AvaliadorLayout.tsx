@@ -56,13 +56,13 @@ export function AvaliadorLayout({ children }: AvaliadorLayoutProps) {
         {/* Logo */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center text-white font-bold">
+            <div className="w-10 h-10 rounded-lg bg-gradient-cosmic flex items-center justify-center text-white font-bold">
               A
             </div>
             {!sidebarCollapsed && (
               <div>
-                <h2 className="text-sm font-bold text-gray-900">AutoU</h2>
-                <p className="text-xs text-gray-500">Portal Avaliador</p>
+                <h2 className="text-sm font-bold text-gradient-cosmic">AutoU</h2>
+                <p className="text-xs text-neutral-500">Portal Avaliador</p>
               </div>
             )}
           </div>
@@ -85,7 +85,7 @@ export function AvaliadorLayout({ children }: AvaliadorLayoutProps) {
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
                 item.current
-                  ? "bg-purple-50 text-purple-700 font-medium"
+                  ? "bg-gradient-cosmic/10 text-cosmic-purple font-medium"
                   : "text-gray-700 hover:bg-gray-100"
               )}
             >

@@ -140,6 +140,16 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/candidato/status/page.js"
+    ],
+    "/api/admin/update-status/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/admin/update-status/route.js"
+    ],
+    "/api/debug/check-vagas-structure/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/debug/check-vagas-structure/route.js"
     ]
   }
 }

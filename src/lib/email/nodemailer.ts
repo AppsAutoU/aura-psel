@@ -15,19 +15,23 @@ interface EmailOptions {
   subject: string
   html: string
   from?: string
+  bcc?: string
 }
 
-export async function sendEmailWithNodemailer({ to, subject, html, from }: EmailOptions) {
+export async function sendEmailWithNodemailer({ to, subject, html, from, bcc }: EmailOptions) {
   try {
     const fromAddress = from || process.env.EMAIL_FROM || `AutoU <${process.env.EMAIL_USER}>`
+    const bccAddress = bcc || 'admin@autou.io'
 
     console.log(`📤 Tentando enviar email para: ${to}`)
     console.log(`📤 From: ${fromAddress}`)
+    console.log(`📤 BCC: ${bccAddress}`)
     console.log(`📤 Subject: ${subject}`)
 
     const info = await transporter.sendMail({
       from: fromAddress,
       to,
+      bcc: bccAddress,
       subject,
       html,
     })

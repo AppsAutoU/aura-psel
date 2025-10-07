@@ -5,6 +5,8 @@ import { AvaliadorLayout } from '@/components/avaliador/AvaliadorLayout'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 interface Candidato {
   id: string
@@ -87,7 +89,7 @@ export default function HistoricoPage() {
       'reprovado_case': { label: 'Reprovado', color: 'bg-red-100 text-red-800 border-red-200', fase: 'Case Prático' },
       'entrevista_tecnica': { label: 'Em Entrevista Técnica', color: 'bg-purple-100 text-purple-800 border-purple-200', fase: 'Entrevista Técnica' },
       'entrevista_socios': { label: 'Marcar Entrevista Com Sócio', color: 'bg-indigo-100 text-indigo-800 border-indigo-200', fase: 'Entrevista com Sócios' },
-      'reprovado': { label: 'Reprovado', color: 'bg-red-100 text-red-800 border-red-200', fase: 'Processo Seletivo' },
+      'reprovado': { label: 'Reprovado na Entrevista Técnica', color: 'bg-red-100 text-red-800 border-red-200', fase: 'Entrevista Técnica' },
       'reprovado_socios': { label: 'Reprovado Pelos Sócios', color: 'bg-red-100 text-red-800 border-red-200', fase: 'Entrevista com Sócios' },
       'contratado': { label: 'Contratado', color: 'bg-emerald-100 text-emerald-800 border-emerald-200', fase: 'Contratação' }
     }
@@ -124,43 +126,32 @@ export default function HistoricoPage() {
   return (
     <AvaliadorLayout>
       <div className="p-6">
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold mb-2">Histórico de Candidatos</h2>
-          <p className="text-gray-600">Acompanhe todos os candidatos que já foram avaliados no processo seletivo</p>
+        <div className="mb-8">
+          <h2 className="text-heading-1 text-gradient-cosmic mb-2">Histórico de Candidatos</h2>
+          <p className="text-body text-neutral-600">Acompanhe todos os candidatos que já foram avaliados no processo seletivo</p>
         </div>
 
         {/* Filter Buttons */}
         <div className="mb-6 flex gap-3">
-          <button
+          <Button
             onClick={() => setFilter('todos')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === 'todos'
-                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
-                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-            }`}
+            variant={filter === 'todos' ? 'default' : 'outline'}
+            className={filter === 'todos' ? 'bg-gradient-cosmic hover-cosmic' : ''}
           >
             Todos ({candidatos.length})
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setFilter('aprovados')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === 'aprovados'
-                ? 'bg-green-600 text-white'
-                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-            }`}
+            variant={filter === 'aprovados' ? 'success' : 'outline'}
           >
             Aprovados ({candidatos.filter(c => c.status.includes('aprovado')).length})
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setFilter('reprovados')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === 'reprovados'
-                ? 'bg-red-600 text-white'
-                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-            }`}
+            variant={filter === 'reprovados' ? 'destructive' : 'outline'}
           >
             Reprovados ({candidatos.filter(c => c.status.includes('reprovado')).length})
-          </button>
+          </Button>
         </div>
 
         {/* Candidates Table */}
@@ -214,15 +205,13 @@ export default function HistoricoPage() {
                         </td>
                         <td className="px-6 py-4 text-center">
                           {candidato.score_ia !== null ? (
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                              candidato.score_ia >= 7
-                                ? 'bg-green-100 text-green-800'
-                                : candidato.score_ia >= 5
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
+                            <Badge variant={
+                              candidato.score_ia >= 7 ? 'success' :
+                              candidato.score_ia >= 5 ? 'secondary' :
+                              'destructive'
+                            }>
                               {candidato.score_ia}/10
-                            </span>
+                            </Badge>
                           ) : (
                             <span className="text-gray-400">-</span>
                           )}
@@ -231,9 +220,14 @@ export default function HistoricoPage() {
                           <p className="text-sm font-medium text-gray-900">{statusInfo.fase}</p>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusInfo.color}`}>
+                          <Badge variant={
+                            candidato.status === 'contratado' ? 'success' :
+                            candidato.status.includes('reprovado') ? 'destructive' :
+                            candidato.status.includes('aprovado') ? 'success' :
+                            'default'
+                          }>
                             {statusInfo.label}
-                          </span>
+                          </Badge>
                         </td>
                         <td className="px-6 py-4">
                           <p className="text-sm text-gray-600">
