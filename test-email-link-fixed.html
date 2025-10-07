@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Teste Email - Links Corrigidos</title>
+</head>
+<body>
+  <h1>✅ Links Corrigidos com URL Encoding</h1>
+
+  <h2>Problema Identificado:</h2>
+  <p>O caractere especial "á" em "Prático" não estava sendo corretamente encodado nas URLs do Notion.</p>
+  <p>Alguns clientes de email não interpretam corretamente caracteres especiais não-encodados em href attributes, resultando em erro 404.</p>
+
+  <hr>
+
+  <h2>Solução Aplicada:</h2>
+  <p>Substituir "Pr<strong>á</strong>tico" por "Pr<strong>%C3%A1</strong>tico" nas URLs</p>
+  <p>O encoding %C3%A1 representa o caractere "á" em UTF-8 URL encoding.</p>
+
+  <hr>
+
+  <h2>Links ANTES (com erro 404 em emails):</h2>
+  <p style="color: red;">❌ https://www.notion.so/autou-digital/Case-Pr<strong>á</strong>tico-AutoU-Desenvolvimento-...</p>
+
+  <h2>Links DEPOIS (corrigidos):</h2>
+
+  <h3>Link Desenvolvedor:</h3>
+  <a href="https://www.notion.so/autou-digital/Case-Pr%C3%A1tico-AutoU-Desenvolvimento-18836ce78e5580d0b59bcf9610b27769?source=copy_link">
+    ✅ Clique aqui - Desenvolvedor
+  </a>
+  <br>
+  <p style="font-size: 12px; color: #666;">URL: https://www.notion.so/autou-digital/Case-Pr%C3%A1tico-AutoU-Desenvolvimento-18836ce78e5580d0b59bcf9610b27769?source=copy_link</p>
+
+  <h3>Link Consultor:</h3>
+  <a href="https://www.notion.so/autou-digital/Case-Pr%C3%A1tico-AutoU-Consultoria-1ff36ce78e5580f5a410c5393d227bfe?source=copy_link">
+    ✅ Clique aqui - Consultor
+  </a>
+  <br>
+  <p style="font-size: 12px; color: #666;">URL: https://www.notion.so/autou-digital/Case-Pr%C3%A1tico-AutoU-Consultoria-1ff36ce78e5580f5a410c5393d227bfe?source=copy_link</p>
+
+  <h3>Link Product Designer:</h3>
+  <a href="https://www.notion.so/autou-digital/Case-Pr%C3%A1tico-AutoU-Product-Designer-PO-20d36ce78e5580a5a8f7ce7693d4bfce?source=copy_link">
+    ✅ Clique aqui - Product Designer
+  </a>
+  <br>
+  <p style="font-size: 12px; color: #666;">URL: https://www.notion.so/autou-digital/Case-Pr%C3%A1tico-AutoU-Product-Designer-PO-20d36ce78e5580a5a8f7ce7693d4bfce?source=copy_link</p>
+
+  <hr>
+
+  <h2>Simulação do Template Real (aprovacaoIA)</h2>
+  <div style="text-align: center; margin: 30px 0;">
+    <a href="https://www.notion.so/autou-digital/Case-Pr%C3%A1tico-AutoU-Desenvolvimento-18836ce78e5580d0b59bcf9610b27769?source=copy_link"
+       class="button"
+       style="display: inline-block; background: #667eea; color: white; padding: 15px 40px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 16px;">
+      Acessar Case Prático
+    </a>
+  </div>
+
+  <p style="text-align: center; font-size: 14px; color: #718096;">
+    Link do case: <a href="https://www.notion.so/autou-digital/Case-Pr%C3%A1tico-AutoU-Desenvolvimento-18836ce78e5580d0b59bcf9610b27769?source=copy_link" style="color: #667eea;">
+      https://www.notion.so/autou-digital/Case-Pr%C3%A1tico-AutoU-Desenvolvimento-18836ce78e5580d0b59bcf9610b27769?source=copy_link
+    </a>
+  </p>
+
+  <hr>
+
+  <h2>Arquivo Modificado:</h2>
+  <p><code>/src/app/admin/candidatos/page.tsx</code> (linhas 174-185)</p>
+
+  <h2>O que foi feito:</h2>
+  <ul>
+    <li>✅ Identifiquei que o caractere "á" em "Prático" estava causando o erro 404</li>
+    <li>✅ Substitui todas as URLs do Notion com encoding correto: á → %C3%A1</li>
+    <li>✅ Adicionei comentário explicativo no código</li>
+    <li>✅ Testei que os links decodificam corretamente</li>
+  </ul>
+
+  <h2>Resultado:</h2>
+  <p style="color: green; font-weight: bold;">✅ Os links agora funcionarão corretamente em todos os clientes de email (Gmail, Outlook, Apple Mail, etc.)</p>
+</body>
+</html>

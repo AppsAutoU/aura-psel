@@ -1757,6 +1757,9 @@ body{
 .pt-6{
   padding-top: var(--spacing-6);
 }
+.pt-3{
+  padding-top: var(--spacing-3);
+}
 .text-left{
   text-align: left;
 }

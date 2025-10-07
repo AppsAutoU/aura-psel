@@ -172,13 +172,25 @@ export default function CandidatosPage() {
         break
 
       case 'case_enviado':
+        // Mapear link do case prático baseado no título da vaga
+        // URLs com caracteres especiais devidamente encodados para evitar 404 em clientes de email
+        let linkCase = 'https://autou.com.br/candidato/case' // Link padrão (fallback)
+
+        if (vagaTitulo.toLowerCase().includes('consultor')) {
+          linkCase = 'https://www.notion.so/autou-digital/Case-Pr%C3%A1tico-AutoU-Consultoria-1ff36ce78e5580f5a410c5393d227bfe?source=copy_link'
+        } else if (vagaTitulo.toLowerCase().includes('desenvolvedor') || vagaTitulo.toLowerCase().includes('developer') || vagaTitulo.toLowerCase().includes('full stack')) {
+          linkCase = 'https://www.notion.so/autou-digital/Case-Pr%C3%A1tico-AutoU-Desenvolvimento-18836ce78e5580d0b59bcf9610b27769?source=copy_link'
+        } else if (vagaTitulo.toLowerCase().includes('product') || vagaTitulo.toLowerCase().includes('designer') || vagaTitulo.toLowerCase().includes('po')) {
+          linkCase = 'https://www.notion.so/autou-digital/Case-Pr%C3%A1tico-AutoU-Product-Designer-PO-20d36ce78e5580a5a8f7ce7693d4bfce?source=copy_link'
+        }
+
         emailType = 'aprovacaoIA'
         emailData = {
           nome: candidato.nome_completo,
           vagaTitulo,
           score: candidato.score_ia || 0,
           prazoCase: `${prazoCaseDias} dias`,
-          linkCase: `https://autou.com.br/candidato/case/${candidatoId}`
+          linkCase
         }
         break
 

@@ -36,12 +36,30 @@ export default function CasesPraticosPage() {
     comentarios_case: '',
     comentario_geral: '',
   })
+  const [caseSubmetido, setCaseSubmetido] = useState(false)
+  const [linkRespostaCase, setLinkRespostaCase] = useState('')
 
   useEffect(() => {
     if (user) {
       loadCandidatos()
     }
   }, [user])
+
+  // Carregar estado do case quando selecionar candidato
+  useEffect(() => {
+    if (selectedCandidato) {
+      const casesSubmetidos = JSON.parse(localStorage.getItem('cases_submetidos') || '{}')
+      const caseInfo = casesSubmetidos[selectedCandidato.id]
+
+      if (caseInfo) {
+        setCaseSubmetido(caseInfo.submetido)
+        setLinkRespostaCase(caseInfo.link || '')
+      } else {
+        setCaseSubmetido(false)
+        setLinkRespostaCase('')
+      }
+    }
+  }, [selectedCandidato])
 
   // Get case link based on job title
   const getCaseLink = (vagaTitulo: string): string => {
@@ -108,6 +126,39 @@ export default function CasesPraticosPage() {
   const handleAvaliacaoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setAvaliacao(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleCaseSubmetidoChange = (submetido: boolean) => {
+    if (!selectedCandidato) return
+
+    setCaseSubmetido(submetido)
+
+    // Salvar no localStorage
+    const casesSubmetidos = JSON.parse(localStorage.getItem('cases_submetidos') || '{}')
+    casesSubmetidos[selectedCandidato.id] = {
+      submetido,
+      link: submetido ? linkRespostaCase : ''
+    }
+    localStorage.setItem('cases_submetidos', JSON.stringify(casesSubmetidos))
+
+    // Se desmarcar "submetido", limpar o link
+    if (!submetido) {
+      setLinkRespostaCase('')
+    }
+  }
+
+  const handleLinkRespostaCaseChange = (link: string) => {
+    if (!selectedCandidato) return
+
+    setLinkRespostaCase(link)
+
+    // Salvar no localStorage
+    const casesSubmetidos = JSON.parse(localStorage.getItem('cases_submetidos') || '{}')
+    casesSubmetidos[selectedCandidato.id] = {
+      submetido: caseSubmetido,
+      link
+    }
+    localStorage.setItem('cases_submetidos', JSON.stringify(casesSubmetidos))
   }
 
   const handleAprovarParaEntrevista = async () => {
@@ -302,19 +353,69 @@ export default function CasesPraticosPage() {
               </h2>
 
               <div className="mb-6 p-4 bg-gray-50 rounded">
-                <h3 className="font-semibold mb-2">Informações do Case</h3>
-                <p className="text-sm text-gray-600 mb-2">
-                  {selectedCandidato.case_descricao}
-                </p>
+                <h3 className="font-semibold mb-3">Informações do Case</h3>
+
+                {/* Checkboxes para status do case */}
+                <div className="space-y-2 mb-4">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!caseSubmetido}
+                      onChange={(e) => handleCaseSubmetidoChange(!e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Aguardando Resposta do Candidato</span>
+                  </label>
+
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={caseSubmetido}
+                      onChange={(e) => handleCaseSubmetidoChange(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Case Submetido pelo Candidato</span>
+                  </label>
+                </div>
+
+                {/* Campo para link da resposta (aparece quando marca "Case Submetido") */}
+                {caseSubmetido && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1 text-gray-700">
+                      Link da Resposta do Candidato
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="Cole aqui o link da resposta submetida pelo candidato"
+                      value={linkRespostaCase}
+                      onChange={(e) => handleLinkRespostaCaseChange(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md text-sm"
+                    />
+                    {linkRespostaCase && (
+                      <a
+                        href={linkRespostaCase}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline text-sm inline-block mt-2"
+                      >
+                        Ver a resposta enviada →
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* Link do case prático original */}
                 {selectedCandidato.case_url && (
-                  <a
-                    href={selectedCandidato.case_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline text-sm"
-                  >
-                    Ver arquivo do case →
-                  </a>
+                  <div className="pt-3 border-t border-gray-200">
+                    <a
+                      href={selectedCandidato.case_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      Ver arquivo do case →
+                    </a>
+                  </div>
                 )}
               </div>
 
