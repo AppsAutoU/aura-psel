@@ -10,6 +10,8 @@ import Link from 'next/link'
 import { generateVagaKey } from '@/lib/utils'
 import { LoadingPage, LoadingButton } from '@/components/ui/loading'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 interface Vaga {
   id: string
@@ -26,6 +28,7 @@ interface Vaga {
   vagas_disponiveis: number
   vaga_key: string
   ativa: boolean
+  prazo_case_dias?: number // Prazo do case em dias após aprovação (D+N)
   created_at: string
   created_by?: string
 }
@@ -60,6 +63,7 @@ export default function VagasPage() {
     requisitos: '',
     beneficios: '',
     vagas_disponiveis: '1',
+    prazo_case_dias: '5', // Padrão: 5 dias (D+5)
   })
 
   useEffect(() => {
@@ -81,7 +85,14 @@ export default function VagasPage() {
 
       if (error) throw error
 
-      setVagas(data || [])
+      // Carregar prazos do localStorage e mesclar com as vagas
+      const prazosCase = JSON.parse(localStorage.getItem('vagas_prazos_case') || '{}')
+      const vagasComPrazo = (data || []).map(vaga => ({
+        ...vaga,
+        prazo_case_dias: prazosCase[vaga.id] || 5 // Padrão 5 dias
+      }))
+
+      setVagas(vagasComPrazo)
     } catch (error) {
       console.error('Erro ao carregar vagas:', error)
       addToast({
@@ -129,6 +140,7 @@ export default function VagasPage() {
       requisitos: vaga.requisitos || '',
       beneficios: vaga.beneficios || '',
       vagas_disponiveis: vaga.vagas_disponiveis.toString(),
+      prazo_case_dias: vaga.prazo_case_dias?.toString() || '5',
     })
     setShowModal(true)
   }
@@ -147,6 +159,7 @@ export default function VagasPage() {
       requisitos: '',
       beneficios: '',
       vagas_disponiveis: '1',
+      prazo_case_dias: '5',
     })
     setShowModal(true)
   }
@@ -165,29 +178,40 @@ export default function VagasPage() {
         throw new Error('Título é obrigatório')
       }
 
+      // Separar prazo_case_dias do formData pois ele não existe na tabela do banco
+      // Será gerenciado via localStorage
+      const { prazo_case_dias, ...restFormData } = formData
+
       const vagaData = {
-        ...formData,
-        titulo: formData.titulo.trim(),
-        cargo: formData.cargo || null,
-        descricao: formData.descricao.trim() || null,
-        departamento: formData.departamento.trim() || null,
-        salario_min: formData.salario_min ? parseFloat(formData.salario_min) : null,
-        salario_max: formData.salario_max ? parseFloat(formData.salario_max) : null,
-        vagas_disponiveis: parseInt(formData.vagas_disponiveis) || 1,
+        titulo: restFormData.titulo.trim(),
+        cargo: restFormData.cargo || null,
+        descricao: restFormData.descricao.trim() || null,
+        departamento: restFormData.departamento.trim() || null,
+        tipo_contrato: restFormData.tipo_contrato || null,
+        modelo_trabalho: restFormData.modelo_trabalho || null,
+        requisitos: restFormData.requisitos || null,
+        beneficios: restFormData.beneficios || null,
+        salario_min: restFormData.salario_min ? parseFloat(restFormData.salario_min) : null,
+        salario_max: restFormData.salario_max ? parseFloat(restFormData.salario_max) : null,
+        vagas_disponiveis: parseInt(restFormData.vagas_disponiveis) || 1,
       }
 
       let result
+      let vagaId: string
+
       if (editingVaga) {
+        vagaId = editingVaga.id
         result = await supabase
           .from('aura_jobs_vagas')
           .update(vagaData)
-          .eq('id', editingVaga.id)
+          .eq('id', vagaId)
       } else {
+        vagaId = crypto.randomUUID()
         result = await supabase
           .from('aura_jobs_vagas')
           .insert([{
             ...vagaData,
-            id: crypto.randomUUID(),
+            id: vagaId,
             vaga_key: generateVagaKey(),
             ativa: true,
             created_by: user.id,
@@ -195,6 +219,11 @@ export default function VagasPage() {
       }
 
       if (result.error) throw result.error
+
+      // Salvar prazo_case_dias no localStorage
+      const prazosCase = JSON.parse(localStorage.getItem('vagas_prazos_case') || '{}')
+      prazosCase[vagaId] = parseInt(prazo_case_dias) || 5
+      localStorage.setItem('vagas_prazos_case', JSON.stringify(prazosCase))
 
       addToast({
         type: 'success',
@@ -216,6 +245,7 @@ export default function VagasPage() {
         requisitos: '',
         beneficios: '',
         vagas_disponiveis: '1',
+        prazo_case_dias: '5',
       })
     } catch (error: any) {
       console.error('Erro ao salvar vaga:', error)
@@ -312,12 +342,12 @@ export default function VagasPage() {
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold text-red-600">Acesso Negado</h1>
           <p className="text-gray-600">Você não tem permissão de administrador.</p>
-          <button 
-            onClick={() => router.push('/auth/login')} 
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          <Button
+            onClick={() => router.push('/auth/login')}
+            className="bg-gradient-cosmic hover-cosmic"
           >
             Fazer Login
-          </button>
+          </Button>
         </div>
       </div>
     )
@@ -327,20 +357,21 @@ export default function VagasPage() {
     <AdminLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Gerenciar Vagas</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-heading-1 text-gradient-cosmic mb-2">Gerenciar Vagas</h1>
+            <p className="text-body text-neutral-600">
               {filteredVagas.length} de {vagas.length} vagas encontradas
             </p>
           </div>
-          <button
+          <Button
             onClick={openCreateModal}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            className="bg-gradient-cosmic hover-cosmic"
+            size="lg"
           >
-            <span>+</span>
-            <span>Nova Vaga</span>
-          </button>
+            <span className="mr-2">+</span>
+            Nova Vaga
+          </Button>
         </div>
         {/* Filtros e Busca */}
         <div className="bg-white rounded-xl border border-gray-200/60 p-4">
@@ -380,12 +411,12 @@ export default function VagasPage() {
                   : 'Comece criando sua primeira vaga de emprego.'}
               </p>
               {(!searchTerm && statusFilter === 'all') && (
-                <button
+                <Button
                   onClick={openCreateModal}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="bg-gradient-cosmic hover-cosmic"
                 >
                   Criar Primeira Vaga
-                </button>
+                </Button>
               )}
             </div>
           ) : (
@@ -397,13 +428,9 @@ export default function VagasPage() {
                       <h3 className="text-lg font-medium text-gray-900 truncate">
                         {vaga.titulo}
                       </h3>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        vaga.ativa 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
+                      <Badge variant={vaga.ativa ? 'success' : 'secondary'}>
                         {vaga.ativa ? 'Ativa' : 'Inativa'}
-                      </span>
+                      </Badge>
                     </div>
                     
                     {vaga.descricao && (
@@ -582,7 +609,30 @@ export default function VagasPage() {
                     className="w-full px-3 py-2 border rounded-md"
                   />
                 </div>
-                
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Prazo do Case Prático (dias)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      name="prazo_case_dias"
+                      min="1"
+                      max="30"
+                      value={formData.prazo_case_dias}
+                      onChange={handleChange}
+                      className="w-24 px-3 py-2 border rounded-md focus:ring-2 focus:ring-violet-500"
+                    />
+                    <span className="text-sm text-gray-600">
+                      dias após aprovação
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    ℹ️ Candidatos terão este prazo para completar o case após serem aprovados pela IA. Padrão: 5 dias (D+5)
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium mb-1">Salário Mínimo</label>
                   <input

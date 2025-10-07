@@ -18,6 +18,29 @@ const badgeVariants = cva(
         error: "bg-red-100 text-red-800 border border-red-200",
         info: "bg-blue-100 text-blue-800 border border-blue-200",
         cosmic: "bg-gradient-cosmic text-white",
+
+        // Reprovações (tons de vermelho crescente)
+        'red-light': "bg-red-50 text-red-700 border border-red-200",
+        'red-medium': "bg-red-100 text-red-800 border border-red-300",
+        'red-dark': "bg-red-200 text-red-900 border border-red-400",
+        'red-intense': "bg-red-300 text-red-950 border border-red-500",
+
+        // Aprovações (tons de verde crescente)
+        'green-light': "bg-green-50 text-green-700 border border-green-200",
+        'green-medium': "bg-green-100 text-green-800 border border-green-300",
+        'green-intense': "bg-green-200 text-green-900 border border-green-400",
+
+        // Processos em andamento (azul)
+        'blue-light': "bg-blue-50 text-blue-700 border border-blue-200",
+        'blue-medium': "bg-blue-100 text-blue-800 border border-blue-300",
+
+        // Processos em andamento (amarelo)
+        'yellow-light': "bg-yellow-50 text-yellow-700 border border-yellow-200",
+        'yellow-medium': "bg-yellow-100 text-yellow-800 border border-yellow-300",
+
+        // Etapas de entrevista
+        'violet': "bg-violet-100 text-violet-800 border border-violet-300",
+        'pink': "bg-pink-100 text-pink-800 border border-pink-300",
       },
     },
     defaultVariants: {

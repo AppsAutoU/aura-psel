@@ -71,13 +71,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         {/* Logo */}
         <div className="flex items-center h-16 px-4 border-b border-gray-200/60">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-cosmic rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">A</span>
             </div>
             {!sidebarCollapsed && (
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">AutoU</h1>
-                <p className="text-xs text-gray-500">Admin Portal</p>
+                <h1 className="text-lg font-semibold text-gradient-cosmic">AutoU</h1>
+                <p className="text-xs text-neutral-500">Admin Portal</p>
               </div>
             )}
           </div>
@@ -92,7 +92,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               className={cn(
                 'flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200',
                 item.current
-                  ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                  ? 'bg-gradient-cosmic/10 text-cosmic-purple border-r-2 border-cosmic-purple'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               )}
             >

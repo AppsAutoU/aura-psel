@@ -42,12 +42,12 @@ export async function POST(request: NextRequest) {
       }, { status: 404 })
     }
 
-    // Buscar dados da vaga separadamente
+    // Buscar dados da vaga separadamente (incluindo prazo_case_dias)
     let vaga = null
     if (candidato.vaga_id) {
       const { data: vagaData, error: vagaError } = await supabase
         .from('aura_jobs_vagas')
-        .select('titulo, descricao, requisitos')
+        .select('titulo, descricao, requisitos, prazo_case_dias')
         .eq('id', candidato.vaga_id)
         .single()
 
@@ -148,12 +148,21 @@ export async function POST(request: NextRequest) {
     const novoStatus = analise.score >= 7 ? 'case_enviado' : 'reprovado_ia'
     const novaFase = analise.score >= 7 ? 'case_pratico' : 'inscricao'
     
-    // Calcular prazo do case (D+5)
+    // Calcular prazo do case (baseado na configuração da vaga ou D+5 como padrão)
     let prazoCase = null
     if (analise.score >= 7) {
+      // Usar prazo configurado na vaga ou padrão de 5 dias
+      const prazoDias = vaga?.prazo_case_dias ?? 5
+
+      // Validar o prazo (segurança extra)
+      const diasValidados = (prazoDias > 0 && prazoDias <= 30) ? prazoDias : 5
+
       const prazo = new Date()
-      prazo.setDate(prazo.getDate() + 5)
+      prazo.setDate(prazo.getDate() + diasValidados) // Dias dinâmicos por vaga
+      prazo.setHours(23, 59, 59, 999) // Set to 23:59:59
       prazoCase = prazo.toISOString()
+
+      console.log(`📅 Prazo do case calculado: D+${diasValidados} para vaga "${vaga?.titulo}"`)
     }
 
     // Atualizar candidato com resultado

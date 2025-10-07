@@ -1,6 +1,6 @@
 export type UserRole = 'admin' | 'avaliador';
 
-export type CandidatoStatus = 
+export type CandidatoStatus =
   | 'inscrito'
   | 'em_avaliacao_ia'
   | 'reprovado_ia'
@@ -10,8 +10,8 @@ export type CandidatoStatus =
   | 'reprovado_case'
   | 'entrevista_tecnica'
   | 'entrevista_socios'
-  | 'aprovado'
   | 'reprovado'
+  | 'reprovado_socios'
   | 'contratado';
 
 export type VagaStatus = 'aberta' | 'pausada' | 'fechada';
@@ -54,6 +54,7 @@ export interface Vaga {
   status: VagaStatus;
   ativa: boolean;
   vagas_disponiveis: number;
+  prazo_case_dias?: number; // Prazo em dias para completar o case (D+N)
   data_publicacao: string;
   data_expiracao?: string;
   created_by?: string;

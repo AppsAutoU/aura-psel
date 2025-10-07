@@ -49,6 +49,39 @@ interface ReprovacaoIAData {
   feedback: string
 }
 
+interface AprovacaoCaseData {
+  nome: string
+  vagaTitulo: string
+  feedback?: string
+}
+
+interface ReprovacaoCaseData {
+  nome: string
+  vagaTitulo: string
+  feedback?: string
+}
+
+interface AprovacaoEntrevistaTecnicaData {
+  nome: string
+  vagaTitulo: string
+}
+
+interface ReprovacaoEntrevistaTecnicaData {
+  nome: string
+  vagaTitulo: string
+}
+
+interface AprovacaoContratacaoData {
+  nome: string
+  vagaTitulo: string
+  proximosPassos?: string
+}
+
+interface ReprovacaoSociosData {
+  nome: string
+  vagaTitulo: string
+}
+
 export const emailTemplates = {
   candidaturaConfirmacao: (data: CandidaturaConfirmacaoData) => ({
     subject: `Confirmação de Candidatura - ${data.vagaTitulo}`,
@@ -516,16 +549,7 @@ export const emailTemplates = {
               </div>
               ` : ''}
             </div>
-            
-            <h3>📝 Como se preparar:</h3>
-            <ul>
-              <li>Revise seu currículo e experiências relevantes</li>
-              <li>Pesquise sobre a AutoU e nossos valores</li>
-              <li>Prepare perguntas sobre a vaga e a empresa</li>
-              <li>Teste sua conexão e equipamentos (se for online)</li>
-              <li>Vista-se adequadamente, mesmo em entrevistas virtuais</li>
-            </ul>
-            
+
             <div style="text-align: center; margin: 30px 0;">
               <a href="https://autou.com.br/candidato/consulta" class="button">
                 Ver Detalhes Completos
@@ -670,7 +694,7 @@ export const emailTemplates = {
   }),
 
   aprovacaoIA: (data: AprovacaoIAData) => ({
-    subject: `🎉 Parabéns! Você foi aprovado na análise IA - ${data.vagaTitulo}`,
+    subject: `🎉 Parabéns! Você foi aprovado - ${data.vagaTitulo}`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -697,19 +721,6 @@ export const emailTemplates = {
               padding: 30px;
               border: 1px solid #e2e8f0;
               border-radius: 0 0 10px 10px;
-            }
-            .score-box {
-              background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-              border-radius: 10px;
-              padding: 20px;
-              margin: 20px 0;
-              text-align: center;
-              color: white;
-            }
-            .score {
-              font-size: 48px;
-              font-weight: bold;
-              margin: 10px 0;
             }
             .alert-box {
               background: #fffaf0;
@@ -745,17 +756,11 @@ export const emailTemplates = {
           <div class="content">
             <p>Olá <strong>${data.nome}</strong>,</p>
 
-            <p>Temos ótimas notícias! Nossa análise inteligente avaliou seu perfil e <strong>você foi aprovado</strong> para prosseguir no processo seletivo da vaga <strong>${data.vagaTitulo}</strong>!</p>
+            <p>Temos ótimas notícias! Nossa análise avaliou seu perfil e <strong>você foi aprovado</strong> para prosseguir no processo seletivo da vaga <strong>${data.vagaTitulo}</strong>!</p>
 
-            <div class="score-box">
-              <p style="margin: 0; font-size: 18px;">Seu Score de Compatibilidade</p>
-              <div class="score">${Math.round(data.score * 10)}%</div>
-              <p style="margin: 0; opacity: 0.9;">(${data.score}/10)</p>
-            </div>
+            <p>Seu perfil demonstrou excelente alinhamento com os requisitos da vaga. Parabéns! 👏</p>
 
-            <p>Seu perfil demonstrou excelente alinhamento com os requisitos da vaga. Parabéns! 🎊</p>
-
-            <h3>🎯 Próxima Etapa: Case Prático</h3>
+            <h3>📋 Próxima Etapa: Case Prático</h3>
 
             <p>Você avançou para a fase do <strong>Case Prático</strong>, onde poderá demonstrar suas habilidades técnicas na prática.</p>
 
@@ -774,7 +779,7 @@ export const emailTemplates = {
 
             <div style="text-align: center; margin: 30px 0;">
               <a href="${data.linkCase}" class="button" style="font-size: 16px; padding: 15px 40px;">
-                📄 Acessar Case Prático
+                Acessar Case Prático
               </a>
             </div>
 
@@ -791,13 +796,18 @@ export const emailTemplates = {
             </ul>
 
             <p>Estamos ansiosos para ver sua solução! Boa sorte! 🚀</p>
+
+            <p>
+              Atenciosamente,<br>
+              <strong>Equipe AutoU</strong>
+            </p>
           </div>
           <div class="footer">
             <p>
-              Em caso de dúvidas, entre em contato: <a href="mailto:rh@aura.com.br">rh@aura.com.br</a>
+              Em caso de dúvidas, entre em contato: <a href="mailto:rh@autou.com.br">rh@autou.com.br</a>
             </p>
             <p style="margin-top: 20px; font-size: 12px;">
-              © ${new Date().getFullYear()} Aura. Todos os direitos reservados.
+              © ${new Date().getFullYear()} AutoU. Todos os direitos reservados.
             </p>
           </div>
         </body>
@@ -867,14 +877,9 @@ export const emailTemplates = {
           <div class="content">
             <p>Olá <strong>${data.nome}</strong>,</p>
 
-            <p>Agradecemos imensamente seu interesse em fazer parte do time Aura e pelo tempo dedicado ao nosso processo seletivo para a vaga de <strong>${data.vagaTitulo}</strong>.</p>
+            <p>Agradecemos imensamente seu interesse em fazer parte do time AutoU e pelo tempo dedicado ao nosso processo seletivo para a vaga de <strong>${data.vagaTitulo}</strong>.</p>
 
             <p>Após uma análise cuidadosa de seu perfil, infelizmente, <strong>não poderemos prosseguir</strong> com sua candidatura neste momento. Esta decisão foi baseada em uma avaliação criteriosa que considera múltiplos fatores de compatibilidade com a posição.</p>
-
-            <div class="info-box">
-              <h3 style="margin: 0 0 10px 0; color: #2d3748;">📊 Feedback da Avaliação</h3>
-              <p style="margin: 0;">${data.feedback}</p>
-            </div>
 
             <p><strong>Isso não é o fim!</strong> Queremos que você saiba que:</p>
             <ul>
@@ -903,15 +908,697 @@ export const emailTemplates = {
 
             <p>
               Atenciosamente,<br>
-              <strong>Equipe Aura</strong>
+              <strong>Equipe AutoU</strong>
             </p>
           </div>
           <div class="footer">
             <p>
-              Em caso de dúvidas, entre em contato: <a href="mailto:rh@aura.com.br">rh@aura.com.br</a>
+              Em caso de dúvidas, entre em contato: <a href="mailto:rh@autou.com.br">rh@autou.com.br</a>
             </p>
             <p style="margin-top: 20px; font-size: 12px;">
-              © ${new Date().getFullYear()} Aura. Todos os direitos reservados.
+              © ${new Date().getFullYear()} AutoU. Todos os direitos reservados.
+            </p>
+          </div>
+        </body>
+      </html>
+    `
+  }),
+
+  aprovacaoCase: (data: AprovacaoCaseData) => ({
+    subject: `🎉 Case Aprovado! Próxima Etapa: Entrevista Técnica - ${data.vagaTitulo}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .header {
+              background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+              color: white;
+              padding: 30px;
+              border-radius: 10px 10px 0 0;
+              text-align: center;
+            }
+            .content {
+              background: white;
+              padding: 30px;
+              border: 1px solid #e2e8f0;
+              border-radius: 0 0 10px 10px;
+            }
+            .success-box {
+              background: #f0fff4;
+              border: 2px solid #48bb78;
+              padding: 20px;
+              margin: 20px 0;
+              border-radius: 8px;
+              text-align: center;
+            }
+            .button {
+              display: inline-block;
+              background: #667eea;
+              color: white;
+              padding: 12px 30px;
+              border-radius: 6px;
+              text-decoration: none;
+              font-weight: 600;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              text-align: center;
+              color: #718096;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 style="margin: 0;">🎉 Parabéns!</h1>
+            <p style="margin: 10px 0 0 0; font-size: 18px;">Seu case foi aprovado!</p>
+          </div>
+          <div class="content">
+            <p>Olá <strong>${data.nome}</strong>,</p>
+
+            <p>É com grande satisfação que informamos que <strong>seu case prático foi aprovado</strong> para a vaga de <strong>${data.vagaTitulo}</strong>! 🎊</p>
+
+            <div class="success-box">
+              <h2 style="margin: 0 0 10px 0; color: #22543d;">✅ Case Aprovado</h2>
+              <p style="margin: 0;">Sua solução demonstrou excelente qualidade técnica e atenção aos detalhes!</p>
+            </div>
+
+            <h3>🎯 Próxima Etapa: Entrevista Técnica</h3>
+            <p>Você avançou para a fase de <strong>Entrevista Técnica</strong>, onde teremos a oportunidade de conhecê-lo melhor e discutir aspectos técnicos mais aprofundados.</p>
+
+            <h3>📅 O que esperar:</h3>
+            <ul>
+              <li><strong>Formato:</strong> Conversa técnica com nossa equipe</li>
+              <li><strong>Duração:</strong> Aproximadamente 15-30 minutos</li>
+              <li><strong>Temas:</strong> Discussão sobre suas experiências, tecnologias e o case desenvolvido</li>
+              <li><strong>Agendamento:</strong> Em breve entraremos em contato para agendar um horário</li>
+            </ul>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://autou.com.br/candidato/consulta" class="button">
+                Acompanhar Status
+              </a>
+            </div>
+
+            <p>Estamos muito animados para conversar com você! Continue assim! 🚀</p>
+
+            <p>
+              Atenciosamente,<br>
+              <strong>Equipe AutoU</strong>
+            </p>
+          </div>
+          <div class="footer">
+            <p>
+              Em caso de dúvidas, entre em contato: <a href="mailto:rh@autou.com.br">rh@autou.com.br</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 12px;">
+              © ${new Date().getFullYear()} AutoU. Todos os direitos reservados.
+            </p>
+          </div>
+        </body>
+      </html>
+    `
+  }),
+
+  reprovacaoCase: (data: ReprovacaoCaseData) => ({
+    subject: `Processo Seletivo - ${data.vagaTitulo}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .header {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 30px;
+              border-radius: 10px 10px 0 0;
+              text-align: center;
+            }
+            .content {
+              background: white;
+              padding: 30px;
+              border: 1px solid #e2e8f0;
+              border-radius: 0 0 10px 10px;
+            }
+            .info-box {
+              background: #f7fafc;
+              border-left: 4px solid #667eea;
+              padding: 15px;
+              margin: 20px 0;
+              border-radius: 4px;
+            }
+            .button {
+              display: inline-block;
+              background: #667eea;
+              color: white;
+              padding: 12px 30px;
+              border-radius: 6px;
+              text-decoration: none;
+              font-weight: 600;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              text-align: center;
+              color: #718096;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 style="margin: 0;">Processo Seletivo - Atualização</h1>
+          </div>
+          <div class="content">
+            <p>Olá <strong>${data.nome}</strong>,</p>
+
+            <p>Agradecemos imensamente pelo tempo e dedicação que você investiu no case prático para a vaga de <strong>${data.vagaTitulo}</strong>.</p>
+
+            <p>Após uma análise cuidadosa de sua solução, infelizmente, <strong>não poderemos prosseguir</strong> com sua candidatura neste momento. Esta decisão foi baseada em critérios técnicos específicos da vaga e nas competências que buscamos para esta posição.</p>
+
+            <div class="info-box">
+              <p style="margin: 0;"><strong>💡 Importante:</strong> Reconhecemos o esforço que você dedicou ao case prático. A decisão não invalida suas habilidades profissionais, apenas reflete que buscamos um perfil específico para esta oportunidade em particular.</p>
+            </div>
+
+            <h3>🚀 Continue Crescendo:</h3>
+            <p>Queremos encorajá-lo a continuar se desenvolvendo:</p>
+            <ul>
+              <li>Continue praticando e aprimorando suas habilidades técnicas</li>
+              <li>Busque feedback em seus projetos e cases</li>
+              <li>Participe de comunidades e eventos da área</li>
+              <li>Mantenha-se atualizado com as tendências do mercado</li>
+              <li>Não desista de seus objetivos profissionais</li>
+            </ul>
+
+            <p><strong>Fique de olho!</strong> Novas oportunidades surgem constantemente:</p>
+            <ul>
+              <li>Seu currículo permanecerá em nosso banco de talentos</li>
+              <li>Incentivamos você a se candidatar a outras vagas que possam se alinhar melhor ao seu perfil</li>
+              <li>Acompanhe nossas redes sociais para ficar por dentro de novas vagas</li>
+            </ul>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://autou.com.br/candidato/vagas" class="button">
+                Ver Outras Vagas Abertas
+              </a>
+            </div>
+
+            <p>Desejamos muito sucesso em sua jornada profissional e esperamos que nossos caminhos possam se cruzar novamente no futuro!</p>
+
+            <p>
+              Atenciosamente,<br>
+              <strong>Equipe AutoU</strong>
+            </p>
+          </div>
+          <div class="footer">
+            <p>
+              Em caso de dúvidas, entre em contato: <a href="mailto:rh@autou.com.br">rh@autou.com.br</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 12px;">
+              © ${new Date().getFullYear()} AutoU. Todos os direitos reservados.
+            </p>
+          </div>
+        </body>
+      </html>
+    `
+  }),
+
+  aprovacaoEntrevistaTecnica: (data: AprovacaoEntrevistaTecnicaData) => ({
+    subject: `🎉 Parabéns! Você foi aprovado na Entrevista Técnica - ${data.vagaTitulo}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .header {
+              background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+              color: white;
+              padding: 30px;
+              border-radius: 10px 10px 0 0;
+              text-align: center;
+            }
+            .content {
+              background: white;
+              padding: 30px;
+              border: 1px solid #e2e8f0;
+              border-radius: 0 0 10px 10px;
+            }
+            .success-box {
+              background: #f0fff4;
+              border: 2px solid #48bb78;
+              padding: 20px;
+              margin: 20px 0;
+              border-radius: 8px;
+              text-align: center;
+            }
+            .button {
+              display: inline-block;
+              background: #667eea;
+              color: white;
+              padding: 12px 30px;
+              border-radius: 6px;
+              text-decoration: none;
+              font-weight: 600;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              text-align: center;
+              color: #718096;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 style="margin: 0;">🎉 Parabéns!</h1>
+            <p style="margin: 10px 0 0 0; font-size: 18px;">Você foi aprovado na Entrevista Técnica!</p>
+          </div>
+          <div class="content">
+            <p>Olá <strong>${data.nome}</strong>,</p>
+
+            <p>É com grande satisfação que informamos que <strong>você foi aprovado na Entrevista Técnica</strong> para a vaga de <strong>${data.vagaTitulo}</strong>! 🎊</p>
+
+            <div class="success-box">
+              <h2 style="margin: 0 0 10px 0; color: #22543d;">✅ Entrevista Técnica Aprovada</h2>
+              <p style="margin: 0;">Sua performance foi excelente e demonstrou grande domínio técnico!</p>
+            </div>
+
+            <h3>🎯 Próxima Etapa: Entrevista com Sócios</h3>
+            <p>Você avançou para a última etapa do nosso processo seletivo: <strong>Entrevista com os Sócios</strong>.</p>
+
+            <h3>📅 O que esperar:</h3>
+            <ul>
+              <li><strong>Formato:</strong> Conversa com os sócios da empresa</li>
+              <li><strong>Duração:</strong> Aproximadamente 15-30 minutos</li>
+              <li><strong>Temas:</strong> Visão de carreira, alinhamento cultural, expectativas mútuas</li>
+              <li><strong>Agendamento:</strong> Em breve entraremos em contato para agendar</li>
+            </ul>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://autou.com.br/candidato/consulta" class="button">
+                Acompanhar Status
+              </a>
+            </div>
+
+            <p>Estamos muito empolgados com sua participação no processo! Continue assim! 🚀</p>
+
+            <p>
+              Atenciosamente,<br>
+              <strong>Equipe AutoU</strong>
+            </p>
+          </div>
+          <div class="footer">
+            <p>
+              Em caso de dúvidas, entre em contato: <a href="mailto:rh@autou.com.br">rh@autou.com.br</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 12px;">
+              © ${new Date().getFullYear()} AutoU. Todos os direitos reservados.
+            </p>
+          </div>
+        </body>
+      </html>
+    `
+  }),
+
+  reprovacaoEntrevistaTecnica: (data: ReprovacaoEntrevistaTecnicaData) => ({
+    subject: `Processo Seletivo - ${data.vagaTitulo}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .header {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 30px;
+              border-radius: 10px 10px 0 0;
+              text-align: center;
+            }
+            .content {
+              background: white;
+              padding: 30px;
+              border: 1px solid #e2e8f0;
+              border-radius: 0 0 10px 10px;
+            }
+            .info-box {
+              background: #f7fafc;
+              border-left: 4px solid #667eea;
+              padding: 15px;
+              margin: 20px 0;
+              border-radius: 4px;
+            }
+            .button {
+              display: inline-block;
+              background: #667eea;
+              color: white;
+              padding: 12px 30px;
+              border-radius: 6px;
+              text-decoration: none;
+              font-weight: 600;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              text-align: center;
+              color: #718096;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 style="margin: 0;">Processo Seletivo - Atualização</h1>
+          </div>
+          <div class="content">
+            <p>Olá <strong>${data.nome}</strong>,</p>
+
+            <p>Agradecemos imensamente pelo tempo e dedicação que você investiu em nosso processo seletivo para a vaga de <strong>${data.vagaTitulo}</strong>.</p>
+
+            <p>Após uma análise cuidadosa da entrevista técnica, infelizmente, <strong>não poderemos prosseguir</strong> com sua candidatura neste momento. Esta decisão foi baseada em critérios específicos que buscamos para esta posição.</p>
+
+            <div class="info-box">
+              <p style="margin: 0;"><strong>💡 Importante:</strong> Reconhecemos suas habilidades técnicas e seu desempenho ao longo do processo. A decisão não invalida suas competências profissionais, apenas reflete que buscamos um perfil específico para esta oportunidade em particular.</p>
+            </div>
+
+            <h3>🚀 Continue Crescendo:</h3>
+            <p>Queremos encorajá-lo a continuar se desenvolvendo:</p>
+            <ul>
+              <li>Continue aprimorando suas habilidades técnicas e comportamentais</li>
+              <li>Busque feedback em entrevistas e processos seletivos</li>
+              <li>Participe de comunidades e eventos da área</li>
+              <li>Mantenha-se atualizado com as tendências do mercado</li>
+              <li>Não desista de seus objetivos profissionais</li>
+            </ul>
+
+            <p><strong>Fique de olho!</strong> Novas oportunidades surgem constantemente:</p>
+            <ul>
+              <li>Seu currículo permanecerá em nosso banco de talentos</li>
+              <li>Incentivamos você a se candidatar a outras vagas que possam se alinhar melhor ao seu perfil</li>
+              <li>Acompanhe nossas redes sociais para ficar por dentro de novas vagas</li>
+            </ul>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://autou.com.br/candidato/vagas" class="button">
+                Ver Outras Vagas Abertas
+              </a>
+            </div>
+
+            <p>Desejamos muito sucesso em sua jornada profissional e esperamos que nossos caminhos possam se cruzar novamente no futuro!</p>
+
+            <p>
+              Atenciosamente,<br>
+              <strong>Equipe AutoU</strong>
+            </p>
+          </div>
+          <div class="footer">
+            <p>
+              Em caso de dúvidas, entre em contato: <a href="mailto:rh@autou.com.br">rh@autou.com.br</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 12px;">
+              © ${new Date().getFullYear()} AutoU. Todos os direitos reservados.
+            </p>
+          </div>
+        </body>
+      </html>
+    `
+  }),
+
+  aprovacaoContratacao: (data: AprovacaoContratacaoData) => ({
+    subject: `🎊 Parabéns! Você foi contratado(a) - ${data.vagaTitulo}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .header {
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+              color: white;
+              padding: 40px;
+              border-radius: 10px 10px 0 0;
+              text-align: center;
+            }
+            .celebration {
+              font-size: 48px;
+              margin: 20px 0;
+            }
+            .content {
+              background: white;
+              padding: 30px;
+              border: 1px solid #e2e8f0;
+              border-radius: 0 0 10px 10px;
+            }
+            .success-box {
+              background: #f0fdf4;
+              border: 2px solid #10b981;
+              padding: 20px;
+              margin: 20px 0;
+              border-radius: 8px;
+              text-align: center;
+            }
+            .button {
+              display: inline-block;
+              background: #10b981;
+              color: white;
+              padding: 12px 30px;
+              border-radius: 6px;
+              text-decoration: none;
+              font-weight: 600;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              text-align: center;
+              color: #718096;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="celebration">🎉🎊🥳🎈</div>
+            <h1 style="margin: 0; font-size: 32px;">Parabéns, ${data.nome}!</h1>
+            <p style="margin: 10px 0 0 0; font-size: 18px;">Você foi contratado(a)!</p>
+          </div>
+          <div class="content">
+            <p>Olá <strong>${data.nome}</strong>,</p>
+
+            <p>É com imensa alegria que informamos sua <strong>contratação</strong> para a vaga de <strong>${data.vagaTitulo}</strong> na AutoU!</p>
+
+            <div class="success-box">
+              <h2 style="margin: 0 0 10px 0; color: #065f46;">🌟 Bem-vindo(a) à família AutoU!</h2>
+              <p style="margin: 0;">Você foi selecionado(a) entre muitos candidatos talentosos e demonstrou excelência em todas as etapas do processo.</p>
+            </div>
+
+            <h3>🚀 Próximos Passos:</h3>
+            <p>${data.proximosPassos || 'Em breve, nossa equipe de RH entrará em contato com você para discutir os próximos passos.'}</p>
+
+            <p>Nossa equipe de Recursos Humanos entrará em contato em breve para:</p>
+            <ul>
+              <li>📋 Apresentar a proposta formal de trabalho</li>
+              <li>💼 Esclarecer detalhes sobre benefícios e remuneração</li>
+              <li>📅 Definir a data de início</li>
+              <li>📄 Orientar sobre a documentação necessária</li>
+              <li>🏢 Compartilhar informações sobre onboarding</li>
+            </ul>
+
+            <p>
+              <strong>Estamos extremamente animados</strong> para tê-lo(a) em nosso time! Mal podemos esperar para ver todas as contribuições incríveis que você trará para a AutoU e para nosso objetivo de revolucionar o setor automotivo!
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <p style="font-size: 24px; margin: 20px 0;">🎯 🚗 💜</p>
+              <p style="color: #10b981; font-weight: bold; font-size: 18px;">Juntos, vamos mais longe!</p>
+            </div>
+
+            <p>Qualquer dúvida, não hesite em nos contatar. Estamos aqui para tornar sua jornada conosco incrível desde o primeiro dia!</p>
+
+            <p>
+              Atenciosamente,<br>
+              <strong>Equipe AutoU</strong>
+            </p>
+          </div>
+          <div class="footer">
+            <p>
+              Este email requer confirmação. Por favor, responda confirmando o recebimento.<br>
+              Contato: <a href="mailto:rh@autou.com.br">rh@autou.com.br</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 12px;">
+              © ${new Date().getFullYear()} AutoU. Todos os direitos reservados.
+            </p>
+          </div>
+        </body>
+      </html>
+    `
+  }),
+
+  reprovacaoSocios: (data: ReprovacaoSociosData) => ({
+    subject: `Processo Seletivo - ${data.vagaTitulo}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .header {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 30px;
+              border-radius: 10px 10px 0 0;
+              text-align: center;
+            }
+            .content {
+              background: white;
+              padding: 30px;
+              border: 1px solid #e2e8f0;
+              border-radius: 0 0 10px 10px;
+            }
+            .info-box {
+              background: #f7fafc;
+              border-left: 4px solid #667eea;
+              padding: 15px;
+              margin: 20px 0;
+              border-radius: 4px;
+            }
+            .button {
+              display: inline-block;
+              background: #667eea;
+              color: white;
+              padding: 12px 30px;
+              border-radius: 6px;
+              text-decoration: none;
+              font-weight: 600;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              text-align: center;
+              color: #718096;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 style="margin: 0;">Processo Seletivo - Atualização</h1>
+          </div>
+          <div class="content">
+            <p>Olá <strong>${data.nome}</strong>,</p>
+
+            <p>Agradecemos imensamente pelo tempo e dedicação que você investiu em nosso processo seletivo para a vaga de <strong>${data.vagaTitulo}</strong>.</p>
+
+            <p>Após cuidadosa análise e entrevistas com nossa liderança, infelizmente, <strong>decidimos não prosseguir</strong> com sua candidatura neste momento. Esta decisão foi baseada em um conjunto de critérios estratégicos e de alinhamento cultural que buscamos para esta posição específica.</p>
+
+            <div class="info-box">
+              <p style="margin: 0;"><strong>💡 Importante:</strong> Reconhecemos seu talento, suas habilidades técnicas e comportamentais demonstradas ao longo de todo o processo. Esta decisão não invalida suas competências profissionais, apenas reflete que, neste momento específico, buscamos um perfil com características particulares para esta oportunidade.</p>
+            </div>
+
+            <h3>🌟 Você chegou longe:</h3>
+            <p>É importante reconhecer que você passou por diversas etapas desafiadoras:</p>
+            <ul>
+              <li>✅ Aprovação na análise de perfil</li>
+              <li>✅ Sucesso no case prático</li>
+              <li>✅ Excelente desempenho na entrevista técnica</li>
+              <li>✅ Entrevista com a liderança</li>
+            </ul>
+            <p>Isso demonstra a qualidade do seu trabalho e do seu perfil profissional!</p>
+
+            <h3>🚀 Continue Crescendo:</h3>
+            <p>Queremos encorajá-lo a continuar se desenvolvendo:</p>
+            <ul>
+              <li>Continue aprimorando suas habilidades técnicas e de liderança</li>
+              <li>Busque feedback em todos os processos que participar</li>
+              <li>Mantenha-se conectado a comunidades profissionais</li>
+              <li>Não desista de seus objetivos de carreira</li>
+            </ul>
+
+            <p><strong>Fique de olho!</strong> Novas oportunidades surgem constantemente:</p>
+            <ul>
+              <li>Seu currículo permanecerá em nosso banco de talentos prioritário</li>
+              <li>Incentivamos você a se candidatar a futuras vagas que possam se alinhar ao seu perfil</li>
+              <li>Acompanhe nossas redes sociais e página de carreiras</li>
+            </ul>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://autou.com.br/candidato/vagas" class="button">
+                Ver Outras Vagas Abertas
+              </a>
+            </div>
+
+            <p>Desejamos muito sucesso em sua jornada profissional e esperamos sinceramente que nossos caminhos possam se cruzar novamente no futuro!</p>
+
+            <p>
+              Atenciosamente,<br>
+              <strong>Equipe AutoU</strong>
+            </p>
+          </div>
+          <div class="footer">
+            <p>
+              Em caso de dúvidas, entre em contato: <a href="mailto:rh@autou.com.br">rh@autou.com.br</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 12px;">
+              © ${new Date().getFullYear()} AutoU. Todos os direitos reservados.
             </p>
           </div>
         </body>

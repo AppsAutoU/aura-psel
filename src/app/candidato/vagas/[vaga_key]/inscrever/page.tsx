@@ -263,10 +263,16 @@ export default function InscricaoPage() {
         .from('aura_jobs_candidatos')
         .insert([candidatoData])
       
-      if (insertError) throw insertError
-      
+      if (insertError) {
+        // Verificar se é erro de email duplicado
+        if (insertError.message?.includes('duplicate key') && insertError.message?.includes('email_vaga_id')) {
+          throw new Error('Você já se candidatou a esta vaga com este e-mail. Cada candidato pode se inscrever apenas uma vez por vaga.')
+        }
+        throw insertError
+      }
+
       setSuccess(true)
-      
+
     } catch (err: any) {
       setError(err.message || 'Erro ao enviar candidatura')
     } finally {
