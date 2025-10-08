@@ -29,12 +29,6 @@ export function AvaliadorLayout({ children }: AvaliadorLayoutProps) {
       current: pathname.startsWith('/avaliador/entrevistas')
     },
     {
-      name: 'Histórico de Candidatos',
-      href: '/avaliador/historico',
-      icon: '📚',
-      current: pathname.startsWith('/avaliador/historico')
-    },
-    {
       name: 'Configurações',
       href: '/avaliador/configuracoes',
       icon: '⚙️',

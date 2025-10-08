@@ -137,8 +137,8 @@ export default function VagasPage() {
       modelo_trabalho: vaga.modelo_trabalho || '',
       salario_min: vaga.salario_min?.toString() || '',
       salario_max: vaga.salario_max?.toString() || '',
-      requisitos: vaga.requisitos || '',
-      beneficios: vaga.beneficios || '',
+      requisitos: Array.isArray(vaga.requisitos) ? vaga.requisitos.join('\n') : (vaga.requisitos || ''),
+      beneficios: Array.isArray(vaga.beneficios) ? vaga.beneficios.join('\n') : (vaga.beneficios || ''),
       vagas_disponiveis: vaga.vagas_disponiveis.toString(),
       prazo_case_dias: vaga.prazo_case_dias?.toString() || '5',
     })
@@ -182,6 +182,24 @@ export default function VagasPage() {
       // Será gerenciado via localStorage
       const { prazo_case_dias, ...restFormData } = formData
 
+      // Converter requisitos e benefícios de string para array (PostgreSQL espera text[])
+      // Cada linha do textarea se torna um item do array
+      let requisitosArray = null
+      if (restFormData.requisitos && restFormData.requisitos.trim()) {
+        requisitosArray = restFormData.requisitos
+          .split('\n')
+          .map(r => r.trim())
+          .filter(r => r.length > 0)
+      }
+
+      let beneficiosArray = null
+      if (restFormData.beneficios && restFormData.beneficios.trim()) {
+        beneficiosArray = restFormData.beneficios
+          .split('\n')
+          .map(b => b.trim())
+          .filter(b => b.length > 0)
+      }
+
       const vagaData = {
         titulo: restFormData.titulo.trim(),
         cargo: restFormData.cargo || null,
@@ -189,8 +207,8 @@ export default function VagasPage() {
         departamento: restFormData.departamento.trim() || null,
         tipo_contrato: restFormData.tipo_contrato || null,
         modelo_trabalho: restFormData.modelo_trabalho || null,
-        requisitos: restFormData.requisitos || null,
-        beneficios: restFormData.beneficios || null,
+        requisitos: requisitosArray,
+        beneficios: beneficiosArray,
         salario_min: restFormData.salario_min ? parseFloat(restFormData.salario_min) : null,
         salario_max: restFormData.salario_max ? parseFloat(restFormData.salario_max) : null,
         vagas_disponiveis: parseInt(restFormData.vagas_disponiveis) || 1,
@@ -663,8 +681,10 @@ export default function VagasPage() {
                   value={formData.requisitos}
                   onChange={handleChange}
                   rows={3}
+                  placeholder="Digite cada requisito em uma linha separada&#10;Exemplo:&#10;Experiência com React&#10;Conhecimento em TypeScript&#10;Inglês intermediário"
                   className="w-full px-3 py-2 border rounded-md"
                 />
+                <p className="text-xs text-gray-500 mt-1">Digite cada requisito em uma linha separada</p>
               </div>
               
               <div>
@@ -674,8 +694,10 @@ export default function VagasPage() {
                   value={formData.beneficios}
                   onChange={handleChange}
                   rows={3}
+                  placeholder="Digite cada benefício em uma linha separada&#10;Exemplo:&#10;Vale Alimentação&#10;Plano de Saúde&#10;Home Office"
                   className="w-full px-3 py-2 border rounded-md"
                 />
+                <p className="text-xs text-gray-500 mt-1">Digite cada benefício em uma linha separada</p>
               </div>
               
               <div className="flex justify-end gap-4">

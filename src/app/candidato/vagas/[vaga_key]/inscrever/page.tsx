@@ -156,21 +156,21 @@ export default function InscricaoPage() {
   const validateForm = () => {
     const required = [
       'nome_completo', 'email', 'telefone', 'data_nascimento', 'cidade', 'estado',
-      'nivel_escolaridade', 'experiencia_anos', 'principais_skills', 'motivacao', 'disponibilidade'
+      'nivel_escolaridade', 'experiencia_anos', 'principais_skills', 'motivacao', 'disponibilidade', 'linkedin'
     ]
-    
+
     for (const field of required) {
       if (!formData[field as keyof FormData]) {
         setError(`Campo obrigatório: ${field.replace('_', ' ')}`)
         return false
       }
     }
-    
+
     if (!formData.curriculo) {
       setError('Currículo é obrigatório')
       return false
     }
-    
+
     return true
   }
 
@@ -253,22 +253,41 @@ export default function InscricaoPage() {
         
         curriculo_url,
         carta_apresentacao_url: carta_url,
-        
-        status: 'inscrito',
-        fase_atual: 'inscricao',
+
+        status: 'em_avaliacao_ia',
+        fase_atual: 'avaliacao_ia',
         data_inscricao: new Date().toISOString()
       }
-      
-      const { error: insertError } = await supabase
+
+      const { data: candidatoInserido, error: insertError } = await supabase
         .from('aura_jobs_candidatos')
         .insert([candidatoData])
-      
+        .select()
+        .single()
+
       if (insertError) {
         // Verificar se é erro de email duplicado
         if (insertError.message?.includes('duplicate key') && insertError.message?.includes('email_vaga_id')) {
           throw new Error('Você já se candidatou a esta vaga com este e-mail. Cada candidato pode se inscrever apenas uma vez por vaga.')
         }
         throw insertError
+      }
+
+      // Iniciar avaliação IA automaticamente em background
+      if (candidatoInserido?.id) {
+        console.log(`🤖 Iniciando avaliação IA automática para candidato ${candidatoInserido.id}`)
+
+        // Chamar API de avaliação IA (não aguardar resposta - executar em background)
+        fetch('/api/ai/avaliar-candidato', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ candidato_id: candidatoInserido.id })
+        }).catch(err => {
+          console.error('Erro ao iniciar avaliação IA:', err)
+          // Não falhar a candidatura se a IA falhar
+        })
       }
 
       setSuccess(true)
@@ -618,12 +637,13 @@ export default function InscricaoPage() {
               
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label htmlFor="linkedin">LinkedIn</Label>
+                  <Label htmlFor="linkedin">LinkedIn <span className="text-red-500">*</span></Label>
                   <Input
                     id="linkedin"
                     value={formData.linkedin}
                     onChange={(e) => handleInputChange('linkedin', e.target.value)}
                     placeholder="https://linkedin.com/in/..."
+                    required
                   />
                 </div>
                 

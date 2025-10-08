@@ -29,6 +29,14 @@ interface Candidato {
   salario_pretendido?: number
   disponibilidade?: string
   score_ia?: number
+  analise_ia_completa?: {
+    score: number
+    pontos_fortes?: string[]
+    pontos_melhoria?: string[]
+    adequacao_vaga?: string
+    recomendacao?: string
+    justificativa?: string
+  }
   status: string
   vaga_id: string
   created_at: string
@@ -626,6 +634,79 @@ export default function CandidatoDetalhesPage() {
                     <p className="text-sm text-gray-500 mt-1">Score de Compatibilidade</p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Justificativa da IA */}
+            {candidato.analise_ia_completa && (
+              <div className="bg-white rounded-xl border border-gray-200/60 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Justificativa para a nota IA</h2>
+
+                {/* Justificativa Principal */}
+                {candidato.analise_ia_completa.justificativa && (
+                  <div className="mb-4">
+                    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                      {candidato.analise_ia_completa.justificativa}
+                    </p>
+                  </div>
+                )}
+
+                {/* Adequação à Vaga */}
+                {candidato.analise_ia_completa.adequacao_vaga && (
+                  <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <h3 className="text-sm font-semibold text-blue-900 mb-2">Adequação à Vaga</h3>
+                    <p className="text-sm text-blue-800 leading-relaxed">
+                      {candidato.analise_ia_completa.adequacao_vaga}
+                    </p>
+                  </div>
+                )}
+
+                {/* Pontos Fortes */}
+                {candidato.analise_ia_completa.pontos_fortes && candidato.analise_ia_completa.pontos_fortes.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold text-green-900 mb-2">✅ Pontos Fortes</h3>
+                    <ul className="space-y-1.5">
+                      {candidato.analise_ia_completa.pontos_fortes.map((ponto, index) => (
+                        <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
+                          <span className="text-green-600 mt-0.5">•</span>
+                          <span>{ponto}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Pontos de Melhoria */}
+                {candidato.analise_ia_completa.pontos_melhoria && candidato.analise_ia_completa.pontos_melhoria.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold text-orange-900 mb-2">⚠️ Pontos de Melhoria</h3>
+                    <ul className="space-y-1.5">
+                      {candidato.analise_ia_completa.pontos_melhoria.map((ponto, index) => (
+                        <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
+                          <span className="text-orange-600 mt-0.5">•</span>
+                          <span>{ponto}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Recomendação */}
+                {candidato.analise_ia_completa.recomendacao && (
+                  <div className={`p-3 rounded-lg border ${
+                    candidato.analise_ia_completa.recomendacao === 'aprovar'
+                      ? 'bg-green-50 border-green-200'
+                      : 'bg-red-50 border-red-200'
+                  }`}>
+                    <span className={`text-sm font-semibold ${
+                      candidato.analise_ia_completa.recomendacao === 'aprovar'
+                        ? 'text-green-900'
+                        : 'text-red-900'
+                    }`}>
+                      Recomendação: {candidato.analise_ia_completa.recomendacao === 'aprovar' ? '✅ Aprovar' : '❌ Reprovar'}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 

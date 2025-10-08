@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { sendEmailWithNodemailer } from '@/lib/email/nodemailer'
 import { emailTemplates } from '@/lib/email/templates'
+import { scrapeProfileLinks } from '@/lib/scraper/profileScraper'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -67,6 +68,133 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', candidato_id)
 
+    // 🚀 NOVO: Fazer scraping dos links profissionais
+    console.log('🔍 Iniciando scraping dos perfis profissionais...')
+
+    let scrapedContent = {
+      linkedinContent: '',
+      githubContent: '',
+      portfolioContent: '',
+      summary: 'Nenhum link profissional fornecido.'
+    }
+
+    const hasLinks = candidato.linkedin || candidato.github || candidato.portfolio
+
+    if (hasLinks) {
+      try {
+        scrapedContent = await scrapeProfileLinks({
+          linkedin: candidato.linkedin || undefined,
+          github: candidato.github || undefined,
+          portfolio: candidato.portfolio || undefined
+        })
+        console.log('✅ Scraping concluído com sucesso!')
+      } catch (error: any) {
+        console.error('❌ Erro ao fazer scraping:', error.message)
+        scrapedContent.summary = `Erro ao acessar links: ${error.message}`
+      }
+    }
+
+    // 📄 NOVO: Extrair texto do currículo PDF usando pdf2json
+    let curriculoText = ''
+    let curriculoInfo = ''
+
+    if (candidato.curriculo_url) {
+      console.log('📄 Baixando e extraindo texto do currículo PDF...')
+      try {
+        // Baixar o PDF do Supabase Storage
+        const { data: pdfData, error: downloadError } = await supabase.storage
+          .from('candidatos')
+          .download(candidato.curriculo_url)
+
+        if (downloadError) {
+          curriculoInfo = `⚠️ Erro ao baixar currículo: ${downloadError.message}`
+          console.warn('⚠️ Erro ao baixar PDF:', downloadError)
+          curriculoText = '[Currículo PDF fornecido mas não pôde ser baixado]'
+        } else if (pdfData) {
+          // Converter para Buffer
+          const arrayBuffer = await pdfData.arrayBuffer()
+          const buffer = Buffer.from(arrayBuffer)
+          console.log(`📦 PDF baixado: ${buffer.length} bytes`)
+
+          // Salvar temporariamente o PDF para processar
+          const fs = await import('fs/promises')
+          const path = await import('path')
+          const os = await import('os')
+
+          const tempDir = os.tmpdir()
+          const tempFilePath = path.join(tempDir, `curriculo_${candidato.id}.pdf`)
+
+          await fs.writeFile(tempFilePath, buffer)
+          console.log(`💾 PDF salvo temporariamente: ${tempFilePath}`)
+
+          // Processar PDF com pdf2json
+          const PDFParser = (await import('pdf2json')).default
+
+          const extractedText = await new Promise<string>((resolve, reject) => {
+            const pdfParser = new PDFParser()
+
+            pdfParser.on('pdfParser_dataReady', (pdfData: any) => {
+              try {
+                // Extrair texto de todas as páginas
+                let text = ''
+                if (pdfData.Pages) {
+                  pdfData.Pages.forEach((page: any) => {
+                    if (page.Texts) {
+                      page.Texts.forEach((textItem: any) => {
+                        if (textItem.R) {
+                          textItem.R.forEach((r: any) => {
+                            if (r.T) {
+                              text += decodeURIComponent(r.T) + ' '
+                            }
+                          })
+                        }
+                      })
+                      text += '\n\n'
+                    }
+                  })
+                }
+                resolve(text.trim())
+              } catch (e: any) {
+                reject(e)
+              }
+            })
+
+            pdfParser.on('pdfParser_dataError', (error: any) => {
+              reject(new Error(error.parserError))
+            })
+
+            pdfParser.loadPDF(tempFilePath)
+          })
+
+          curriculoText = extractedText
+
+          // Limpar arquivo temporário
+          try {
+            await fs.unlink(tempFilePath)
+            console.log('🗑️ Arquivo temporário removido')
+          } catch (e) {
+            console.warn('⚠️ Não foi possível remover arquivo temporário')
+          }
+
+          curriculoInfo = `✅ Currículo PDF extraído com sucesso (${curriculoText.length} caracteres)`
+          console.log(`✅ Texto extraído do PDF: ${curriculoText.length} caracteres`)
+        } else {
+          curriculoInfo = '⚠️ Currículo PDF não encontrado'
+          curriculoText = '[Currículo PDF não encontrado no storage]'
+          console.warn('⚠️ PDF não encontrado')
+        }
+      } catch (error: any) {
+        console.error('❌ Erro ao processar currículo:', error.message)
+        console.error('Stack:', error.stack)
+        curriculoInfo = `❌ Erro ao extrair texto do PDF: ${error.message}`
+        curriculoText = `[Erro ao processar currículo PDF: ${error.message}]`
+      }
+    } else {
+      curriculoInfo = 'ℹ️ Candidato não enviou currículo em PDF'
+      curriculoText = '[Candidato não enviou currículo em PDF]'
+      console.log('ℹ️ Candidato não enviou currículo')
+    }
+
     // Preparar informações de links profissionais
     const linksInfo = []
     if (candidato.linkedin) {
@@ -79,67 +207,189 @@ export async function POST(request: NextRequest) {
       linksInfo.push(`- Portfolio: ${candidato.portfolio}`)
     }
 
-    // Preparar contexto para a IA
+    // Preparar contexto para a IA com conteúdo REAL dos links
     const prompt = `
-    Você é um recrutador experiente avaliando um candidato para a vaga de "${vaga?.titulo || 'Sem título'}" na Aura.
+    ==========================================
+    🎯 VAGA: ${vaga?.titulo || 'Sem título'}
+    ==========================================
 
-    Descrição da vaga: ${vaga?.descricao || 'Não informada'}
-    Requisitos: ${vaga?.requisitos ? JSON.stringify(vaga.requisitos) : 'Não informados'}
+    DESCRIÇÃO DA VAGA:
+    ${vaga?.descricao || 'Não informada'}
 
-    Informações do candidato:
-    - Nome: ${candidato.nome_completo}
-    - Email: ${candidato.email}
-    - Formação: ${candidato.nivel_escolaridade || 'Não informada'} - ${candidato.curso || ''} (${candidato.instituicao || ''})
-    - Experiência: ${candidato.experiencia_anos || 0} anos como ${candidato.cargo_atual || 'Não informado'} em ${candidato.empresa_atual || 'Não informada'}
-    - Skills: ${candidato.principais_skills || 'Não informado'}
-    - Cidade: ${candidato.cidade || 'Não informada'}, ${candidato.estado || ''}
-    - Motivação: ${candidato.motivacao || 'Não informada'}
-    - Disponibilidade: ${candidato.disponibilidade || 'Não informada'}
-    - Salário pretendido: ${candidato.salario_pretendido ? `R$ ${candidato.salario_pretendido}` : 'Não informado'}
+    REQUISITOS DA VAGA:
+    ${vaga?.requisitos ? vaga.requisitos.map((r: string) => `• ${r}`).join('\n    ') : '• Não informados'}
 
-    Links Profissionais (IMPORTANTE: Acesse e analise estes links para obter mais informações):
-    ${linksInfo.length > 0 ? linksInfo.join('\n    ') : '- Nenhum link fornecido'}
+    ==========================================
+    📝 INFORMAÇÕES DO FORMULÁRIO DE INSCRIÇÃO
+    ==========================================
 
-    ${linksInfo.length > 0 ? `
-    INSTRUÇÕES IMPORTANTES:
-    - Acesse o perfil do LinkedIn para verificar histórico profissional, recomendações, certificações e conexões
-    - Analise o GitHub para avaliar qualidade do código, projetos, frequência de commits e tecnologias usadas
-    - Revise o portfolio para entender trabalhos anteriores, design, e capacidade técnica
-    - Use estas informações adicionais para complementar sua avaliação
+    DADOS PESSOAIS:
+    • Nome Completo: ${candidato.nome_completo}
+    • Email: ${candidato.email}
+    • Telefone: ${candidato.telefone || 'Não informado'}
+    • Data de Nascimento: ${candidato.data_nascimento || 'Não informada'}
+    • Localização: ${candidato.cidade || 'Não informada'}${candidato.estado ? `, ${candidato.estado}` : ''}${candidato.pais ? ` - ${candidato.pais}` : ''}
+
+    FORMAÇÃO ACADÊMICA:
+    • Nível de Escolaridade: ${candidato.nivel_escolaridade || 'Não informada'}
+    • Curso: ${candidato.curso || 'Não informado'}
+    • Instituição: ${candidato.instituicao || 'Não informada'}
+    • Ano de Conclusão: ${candidato.ano_conclusao || 'Não informado'}
+
+    EXPERIÊNCIA PROFISSIONAL:
+    • Anos de Experiência: ${candidato.experiencia_anos || 0} anos
+    • Cargo Atual: ${candidato.cargo_atual || 'Não informado'}
+    • Empresa Atual: ${candidato.empresa_atual || 'Não informada'}
+    • Salário Pretendido: ${candidato.salario_pretendido ? `R$ ${candidato.salario_pretendido.toLocaleString('pt-BR')}` : 'Não informado'}
+
+    SKILLS E COMPETÊNCIAS:
+    ${candidato.principais_skills || 'Não informado'}
+
+    MOTIVAÇÃO PARA A VAGA:
+    ${candidato.motivacao || 'Não informada'}
+
+    DISPONIBILIDADE:
+    ${candidato.disponibilidade || 'Não informada'}
+
+    LINKS PROFISSIONAIS:
+    ${linksInfo.length > 0 ? linksInfo.join('\n    ') : '• Nenhum link fornecido'}
+
+    ==========================================
+    📄 CURRÍCULO EM PDF (TEXTO EXTRAÍDO):
+    ==========================================
+
+    ${curriculoInfo}
+
+    ${curriculoText && curriculoText !== '[Candidato não enviou currículo em PDF]' ? `
+    CONTEÚDO DO CURRÍCULO:
+    ${curriculoText.slice(0, 6000)}
+    ${curriculoText.length > 6000 ? '\n\n[Currículo muito longo - primeiros 6000 caracteres mostrados]' : ''}
     ` : ''}
-    
-    Avalie o candidato considerando:
-    1. Adequação técnica aos requisitos da vaga
-    2. Experiência relevante
-    3. Potencial de crescimento
-    4. Fit cultural baseado na motivação
-    
+
+    ==========================================
+    CONTEÚDO EXTRAÍDO DOS PERFIS PROFISSIONAIS:
+    ==========================================
+
+    ${scrapedContent.summary}
+
+    ==========================================
+
+    INSTRUÇÕES DE AVALIAÇÃO:
+
+    🔍 ANÁLISE COMPLETA - USE TODAS AS FONTES DE INFORMAÇÃO:
+
+    1️⃣ FORMULÁRIO DE INSCRIÇÃO (peso alto - informações diretas do candidato):
+       - Analise detalhadamente TODAS as informações do formulário acima
+       - Dê especial atenção à MOTIVAÇÃO, SKILLS e EXPERIÊNCIA declarada
+       - Considere a clareza e profundidade das respostas
+       - Avalie se o candidato demonstrou interesse genuíno na vaga
+
+    2️⃣ CURRÍCULO EM PDF (peso altíssimo - documento formal):
+       - Analise profundamente TODO o conteúdo do currículo
+       - Verifique experiências, projetos, certificações, educação
+       - Compare com as informações do formulário para validar consistência
+
+    3️⃣ PERFIS PROFISSIONAIS (peso médio-alto - validação externa):
+       - GitHub: qualidade de código, projetos, atividade, linguagens
+       - Portfolio: projetos apresentados, qualidade visual/técnica
+       - LinkedIn: experiências profissionais, recomendações, skills
+
+    CRITÉRIOS DE AVALIAÇÃO (em ordem de importância):
+
+    1. ADEQUAÇÃO AOS REQUISITOS DA VAGA (40% do score):
+       - O candidato possui as skills técnicas requeridas?
+       - A experiência profissional é relevante para a vaga?
+       - A formação acadêmica é adequada?
+       - Analise TANTO o formulário QUANTO o currículo e perfis
+
+    2. EXPERIÊNCIA E QUALIFICAÇÃO (30% do score):
+       - Anos de experiência declarados no formulário
+       - Empresas e cargos anteriores (formulário + currículo + LinkedIn)
+       - Projetos realizados (currículo + GitHub + Portfolio)
+       - Certificações e educação continuada
+
+    3. MOTIVAÇÃO E FIT CULTURAL (20% do score):
+       - Qualidade da motivação escrita no formulário
+       - Demonstração de interesse genuíno na vaga e empresa
+       - Alinhamento de valores e objetivos
+       - Disponibilidade e expectativas salariais compatíveis
+
+    4. EVIDÊNCIAS TÉCNICAS CONCRETAS (10% do score):
+       - Para tech: código no GitHub, projetos no portfolio
+       - Para design: portfolio visual, projetos apresentados
+       - Para outras áreas: trabalhos, publicações, realizações
+
+    ⚠️ IMPORTANTES:
+    - Se o LinkedIn não estiver acessível (requer autenticação), NÃO penalize o candidato
+    - Dê GRANDE importância às informações do FORMULÁRIO - são respostas diretas e intencionais
+    - A MOTIVAÇÃO escrita no formulário é crucial para avaliar fit e interesse
+    - SKILLS declaradas no formulário devem ser levadas a sério, especialmente se validadas no currículo/perfis
+    - Compare sempre: formulário ↔ currículo ↔ perfis online (busque consistência)
+
     Retorne um JSON com:
     {
-      "score": número de 0 a 10 (seja criterioso, scores acima de 7 devem ser para candidatos excepcionais),
-      "pontos_fortes": ["lista de pontos fortes"],
-      "pontos_melhoria": ["lista de pontos a melhorar"],
-      "adequacao_vaga": "texto explicando a adequação à vaga",
+      "score": número de 0 a 10 (seja equilibrado - considere TODAS as fontes: formulário + currículo + perfis),
+      "pontos_fortes": ["lista de pontos fortes baseados no formulário, currículo e perfis - cite as fontes"],
+      "pontos_melhoria": ["lista de pontos a melhorar ou lacunas identificadas"],
+      "adequacao_vaga": "texto explicando a adequação à vaga, citando informações específicas do formulário, currículo e perfis",
       "recomendacao": "aprovar" ou "reprovar",
-      "justificativa": "justificativa detalhada da decisão"
+      "justificativa": "justificativa detalhada explicando o score, SEMPRE mencionando: 1) O que foi analisado no FORMULÁRIO (motivação, skills, experiência declarada), 2) O que foi encontrado no CURRÍCULO, 3) O que foi validado nos PERFIS ONLINE. Seja específico e cite exemplos concretos de cada fonte."
     }
     `
 
+    // Preparar mensagens para a API - se houver PDF, usar formato multimodal
+    const messages: any[] = [
+      {
+        role: "system",
+        content: `Você é um recrutador técnico sênior com expertise em avaliação profunda de candidatos.
+
+        Você recebe CONTEÚDO REAL extraído automaticamente de múltiplas fontes:
+        1. 📝 FORMULÁRIO DE INSCRIÇÃO (peso ALTO - informações diretas e intencionais do candidato)
+        2. 📄 CURRÍCULO EM PDF (peso ALTÍSSIMO - documento formal completo que você DEVE LER)
+        3. 🔗 LinkedIn, GitHub e Portfolio (peso MÉDIO-ALTO - validação externa)
+
+        Sua responsabilidade é analisar TODO o conteúdo fornecido, seguindo esta prioridade:
+
+        🔴 PRIORIDADE MÁXIMA - FORMULÁRIO DE INSCRIÇÃO:
+        - Motivação escrita pelo candidato (demonstra interesse genuíno)
+        - Skills e competências autodeclaradas
+        - Experiência profissional informada
+        - Formação acadêmica
+        - Disponibilidade e expectativas
+        - Respostas específicas sobre a vaga
+
+        🔴 PRIORIDADE MÁXIMA - CURRÍCULO PDF:
+        - Experiências profissionais detalhadas
+        - Projetos realizados
+        - Formação acadêmica completa
+        - Certificações e cursos
+        - Idiomas e outras qualificações
+        - VOCÊ RECEBERÁ O PDF PARA ANÁLISE VISUAL - LEIA TODO O DOCUMENTO
+
+        🟡 VALIDAÇÃO EXTERNA - PERFIS ONLINE:
+        - LinkedIn: experiências, educação, skills, recomendações
+        - GitHub: repositórios, código, projetos, atividade
+        - Portfolio: projetos visuais/técnicos apresentados
+
+        IMPORTANTE: O FORMULÁRIO e o CURRÍCULO são as fontes PRIMÁRIAS de informação.
+        Os perfis online servem para VALIDAR e COMPLEMENTAR essas informações.
+
+        Seja equilibrado e justo: avalie com base em TODAS as fontes, dando peso especial ao que o candidato escreveu no formulário e no currículo.`
+      }
+    ]
+
+    // Adicionar prompt principal
+    messages.push({
+      role: "user",
+      content: prompt
+    })
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "Você é um recrutador experiente que avalia candidatos de forma justa e criteriosa. Quando fornecido com URLs de perfis profissionais (LinkedIn, GitHub, Portfolio), você deve considerar essas informações na sua avaliação, extraindo insights sobre experiência, habilidades técnicas, projetos e recomendações."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
+      messages,
       response_format: { type: "json_object" },
       temperature: 0.3,
-      max_tokens: 1500,
+      max_tokens: 2000,
     })
 
     const analise = JSON.parse(completion.choices[0].message.content || '{}')

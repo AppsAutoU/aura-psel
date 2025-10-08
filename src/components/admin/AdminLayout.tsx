@@ -37,6 +37,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       current: pathname.startsWith('/admin/candidatos')
     },
     {
+      name: 'Histórico de Candidatos',
+      href: '/admin/historico',
+      icon: '📚',
+      current: pathname.startsWith('/admin/historico')
+    },
+    {
       name: 'Usuários',
       href: '/admin/usuarios',
       icon: '👤',

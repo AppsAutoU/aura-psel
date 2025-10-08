@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -39,6 +40,7 @@ interface Candidato {
 export default function CandidatosPage() {
   const router = useRouter()
   const { user, loading: authLoading, isAdmin } = useAdminAuth()
+  const confirm = useConfirm()
   const [candidatos, setCandidatos] = useState<Candidato[]>([])
   const [loading, setLoading] = useState(true)
   const [filtroStatus, setFiltroStatus] = useState<string>('')
@@ -55,7 +57,7 @@ export default function CandidatosPage() {
 
   const loadData = async () => {
     const supabase = createClient()
-    
+
     const [candidatosRes, vagasRes] = await Promise.all([
       supabase
         .from('aura_jobs_candidatos')
@@ -85,6 +87,75 @@ export default function CandidatosPage() {
     }
 
     setLoading(false)
+  }
+
+  // Função para obter transições de status baseado no status atual
+  const getStatusTransition = (currentStatus: string) => {
+    const transitions: Record<string, { next: string; reject: string; stage: string }> = {
+      'inscrito': { next: 'em_avaliacao_ia', reject: 'reprovado_ia', stage: 'Inscrição' },
+      'em_avaliacao_ia': { next: 'case_enviado', reject: 'reprovado_ia', stage: 'Avaliação IA' },
+      'case_enviado': { next: 'entrevista_tecnica', reject: 'reprovado_case', stage: 'Case Prático' },
+      'entrevista_tecnica': { next: 'entrevista_socios', reject: 'reprovado', stage: 'Entrevista Técnica' },
+      'entrevista_socios': { next: 'contratado', reject: 'reprovado_socios', stage: 'Entrevista com Sócios' }
+    }
+    return transitions[currentStatus]
+  }
+
+  // Função para aprovar candidato para próxima etapa
+  const aprovarParaProximaEtapa = async (candidatoId: string, currentStatus: string) => {
+    const transition = getStatusTransition(currentStatus)
+    if (!transition) {
+      alert('Este candidato não pode ser aprovado (já está em uma etapa final)')
+      return
+    }
+
+    const candidato = candidatos.find(c => c.id === candidatoId)
+    if (!candidato) return
+
+    const confirmar = await confirm({
+      type: 'approve',
+      title: 'APROVAR CANDIDATO',
+      candidato: candidato.nome_completo,
+      etapa: transition.stage,
+      actions: [
+        'Mover para a próxima etapa do processo seletivo',
+        'Enviar e-mail de aprovação ao candidato',
+        'Atualizar status no sistema'
+      ]
+    })
+
+    if (confirmar) {
+      await updateCandidatoStatus(candidatoId, transition.next)
+    }
+  }
+
+  // Função para reprovar candidato na etapa atual
+  const reprovarCandidatoNaEtapa = async (candidatoId: string, currentStatus: string) => {
+    const transition = getStatusTransition(currentStatus)
+    if (!transition) {
+      alert('Este candidato não pode ser reprovado (já está em uma etapa final)')
+      return
+    }
+
+    const candidato = candidatos.find(c => c.id === candidatoId)
+    if (!candidato) return
+
+    const confirmar = await confirm({
+      type: 'reject',
+      title: 'ATENÇÃO: REPROVAR CANDIDATO',
+      candidato: candidato.nome_completo,
+      etapa: transition.stage,
+      actions: [
+        'Mover o candidato para o Histórico de Candidatos',
+        'Enviar um e-mail de reprovação',
+        'Remover da lista de candidatos ativos'
+      ],
+      warning: 'Esta ação não pode ser facilmente revertida'
+    })
+
+    if (confirmar) {
+      await updateCandidatoStatus(candidatoId, transition.reject)
+    }
   }
 
   const updateCandidatoStatus = async (candidatoId: string, novoStatus: string) => {
@@ -335,15 +406,22 @@ export default function CandidatosPage() {
     return labels[status] || status
   }
 
-  const candidatosFiltrados = candidatos.filter(candidato => {
+  // Filtrar apenas candidatos ativos (não reprovados e não contratados)
+  const candidatosAtivos = candidatos.filter(candidato => {
+    const isReprovado = candidato.status.includes('reprovado')
+    const isContratado = candidato.status === 'contratado'
+    return !isReprovado && !isContratado
+  })
+
+  const candidatosFiltrados = candidatosAtivos.filter(candidato => {
     const statusMatch = !filtroStatus || candidato.status === filtroStatus
     const vagaMatch = !filtroVaga || candidato.vaga_id === filtroVaga
     return statusMatch && vagaMatch
   })
 
   const estatisticas = {
-    total: candidatos.length,
-    porStatus: candidatos.reduce((acc, candidato) => {
+    total: candidatosAtivos.length,
+    porStatus: candidatosAtivos.reduce((acc, candidato) => {
       acc[candidato.status] = (acc[candidato.status] || 0) + 1
       return acc
     }, {} as Record<string, number>)
@@ -409,7 +487,7 @@ export default function CandidatosPage() {
         </div>
 
         {/* Filtros */}
-        <div className="mb-6 flex gap-4 flex-wrap">
+        <div className="mb-6 flex gap-4 flex-wrap items-center">
           <select
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value)}
@@ -490,23 +568,30 @@ export default function CandidatosPage() {
                   </div>
                   
                   <div className="flex flex-col gap-2 ml-4">
-                    <select
-                      value={getStatusReal(candidato.id, candidato.status)}
-                      onChange={(e) => updateCandidatoStatus(candidato.id, e.target.value)}
-                      className="text-xs border rounded px-2 py-1"
-                    >
-                      <option value="inscrito">Inscrito</option>
-                      <option value="em_avaliacao_ia">Em Avaliação IA</option>
-                      <option value="reprovado_ia">Reprovado pela IA</option>
-                      <option value="case_enviado">Case Enviado</option>
-                      <option value="reprovado_case">Case Reprovado</option>
-                      <option value="entrevista_tecnica">Aguardando Entrevista Técnica</option>
-                      <option value="reprovado">Reprovado na Entrevista Técnica</option>
-                      <option value="entrevista_socios">Aguardando Entrevista com Sócios</option>
-                      <option value="reprovado_socios">Reprovado na Entrevista com Sócios</option>
-                      <option value="contratado">Contratado</option>
-                    </select>
-                    
+                    {getStatusTransition(candidato.status) ? (
+                      <>
+                        <Button
+                          onClick={() => aprovarParaProximaEtapa(candidato.id, candidato.status)}
+                          variant="default"
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          ✓ Aprovar Para Próxima Etapa
+                        </Button>
+                        <Button
+                          onClick={() => reprovarCandidatoNaEtapa(candidato.id, candidato.status)}
+                          variant="destructive"
+                          size="sm"
+                        >
+                          ✗ Reprovar Nesta Etapa
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="text-xs text-gray-500 italic">
+                        {candidato.status === 'contratado' ? 'Contratado' : 'Processo finalizado'}
+                      </div>
+                    )}
+
                     <Button
                       variant="outline"
                       size="sm"

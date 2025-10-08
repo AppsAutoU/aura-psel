@@ -19,11 +19,18 @@ interface Candidato {
   case_descricao?: string
 }
 
+interface Vaga {
+  id: string
+  titulo: string
+}
+
 export default function CasesPraticosPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAvaliadorAuth()
   const [loading, setLoading] = useState(true)
   const [candidatos, setCandidatos] = useState<Candidato[]>([])
+  const [vagas, setVagas] = useState<Vaga[]>([])
+  const [vagaSelecionada, setVagaSelecionada] = useState<string>('todas')
   const [selectedCandidato, setSelectedCandidato] = useState<Candidato | null>(null)
   const [avaliacao, setAvaliacao] = useState({
     nota_tecnica: '',
@@ -42,6 +49,7 @@ export default function CasesPraticosPage() {
   useEffect(() => {
     if (user) {
       loadCandidatos()
+      loadVagas()
     }
   }, [user])
 
@@ -80,11 +88,33 @@ export default function CasesPraticosPage() {
     return 'https://www.notion.so/autou-digital/Case-Pr-tico-AutoU-Desenvolvimento-18836ce78e5580d0b59bcf9610b27769'
   }
 
+  const loadVagas = async () => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('aura_jobs_vagas')
+        .select('id, titulo')
+        .eq('ativa', true)
+        .order('titulo', { ascending: true })
+
+      if (error) {
+        console.error('Erro ao carregar vagas:', error)
+        return
+      }
+
+      if (data) {
+        setVagas(data)
+      }
+    } catch (err) {
+      console.error('Erro ao carregar vagas:', err)
+    }
+  }
+
   const loadCandidatos = async () => {
     try {
       const supabase = createClient()
 
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .from('aura_jobs_candidatos')
         .select(`
           *,
@@ -122,6 +152,11 @@ export default function CasesPraticosPage() {
       setLoading(false)
     }
   }
+
+  // Filtrar candidatos por vaga selecionada
+  const candidatosFiltrados = vagaSelecionada === 'todas'
+    ? candidatos
+    : candidatos.filter(c => c.vaga_id === vagaSelecionada)
 
   const handleAvaliacaoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -305,15 +340,41 @@ export default function CasesPraticosPage() {
   return (
     <AvaliadorLayout>
       <div className="p-6">
-        <h2 className="text-2xl font-semibold mb-6">Candidatos para Avaliar</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-semibold">Candidatos para Avaliar</h2>
 
-        {candidatos.length === 0 ? (
+          {/* Filtro por Vaga */}
+          <div className="flex items-center gap-2">
+            <label htmlFor="filtro-vaga" className="text-sm font-medium text-gray-700">
+              Filtrar por vaga:
+            </label>
+            <select
+              id="filtro-vaga"
+              value={vagaSelecionada}
+              onChange={(e) => setVagaSelecionada(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="todas">Todas as vagas</option>
+              {vagas.map((vaga) => (
+                <option key={vaga.id} value={vaga.id}>
+                  {vaga.titulo}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {candidatosFiltrados.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-600">Não há candidatos para avaliar no momento.</p>
+            <p className="text-gray-600">
+              {vagaSelecionada === 'todas'
+                ? 'Não há candidatos para avaliar no momento.'
+                : 'Não há candidatos para esta vaga.'}
+            </p>
           </div>
         ) : (
           <div className="grid gap-4">
-            {candidatos.map((candidato) => (
+            {candidatosFiltrados.map((candidato) => (
               <div key={candidato.id} className="bg-white rounded-lg shadow p-6">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">

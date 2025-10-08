@@ -19,15 +19,23 @@ interface Candidato {
   score_ia: number | null
   created_at: string
   updated_at: string
+  vaga_id?: string
   vaga?: {
     titulo: string
   }
+}
+
+interface Vaga {
+  id: string
+  titulo: string
 }
 
 export default function EntrevistasPage() {
   const router = useRouter()
   const { user, loading } = useAvaliadorAuth()
   const [candidatos, setCandidatos] = useState<Candidato[]>([])
+  const [vagas, setVagas] = useState<Vaga[]>([])
+  const [vagaSelecionada, setVagaSelecionada] = useState<string>('todas')
   const [loadingCandidatos, setLoadingCandidatos] = useState(true)
   const [selectedCandidato, setSelectedCandidato] = useState<Candidato | null>(null)
   const [showModal, setShowModal] = useState(false)
@@ -42,6 +50,26 @@ export default function EntrevistasPage() {
   }, [loading, user, router])
 
   useEffect(() => {
+    const fetchVagas = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('aura_jobs_vagas')
+          .select('id, titulo')
+          .eq('ativa', true)
+          .order('titulo', { ascending: true })
+
+        if (error) {
+          console.error('Erro ao carregar vagas:', error)
+          return
+        }
+
+        setVagas(data || [])
+      } catch (error) {
+        console.error('Erro ao carregar vagas:', error)
+      }
+    }
+
     const fetchCandidatos = async () => {
       try {
         const supabase = createClient()
@@ -58,6 +86,7 @@ export default function EntrevistasPage() {
             score_ia,
             created_at,
             updated_at,
+            vaga_id,
             vaga:aura_jobs_vagas (
               titulo
             )
@@ -79,9 +108,15 @@ export default function EntrevistasPage() {
     }
 
     if (user) {
+      fetchVagas()
       fetchCandidatos()
     }
   }, [user])
+
+  // Filtrar candidatos por vaga selecionada
+  const candidatosFiltrados = vagaSelecionada === 'todas'
+    ? candidatos
+    : candidatos.filter(c => c.vaga_id === vagaSelecionada)
 
   const handleAprovar = async () => {
     if (!selectedCandidato) return
@@ -212,20 +247,46 @@ export default function EntrevistasPage() {
   return (
     <AvaliadorLayout>
       <div className="p-6">
-        <div className="mb-8">
-          <h2 className="text-heading-1 text-gradient-cosmic mb-2">Candidatos Na Entrevista Técnica</h2>
-          <p className="text-body text-neutral-600">Candidatos aprovados no case prático aguardando entrevista técnica</p>
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <h2 className="text-heading-1 text-gradient-cosmic mb-2">Candidatos Na Entrevista Técnica</h2>
+            <p className="text-body text-neutral-600">Candidatos aprovados no case prático aguardando entrevista técnica</p>
+          </div>
+
+          {/* Filtro por Vaga */}
+          <div className="flex items-center gap-2">
+            <label htmlFor="filtro-vaga" className="text-sm font-medium text-gray-700">
+              Filtrar por vaga:
+            </label>
+            <select
+              id="filtro-vaga"
+              value={vagaSelecionada}
+              onChange={(e) => setVagaSelecionada(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="todas">Todas as vagas</option>
+              {vagas.map((vaga) => (
+                <option key={vaga.id} value={vaga.id}>
+                  {vaga.titulo}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {candidatos.length === 0 ? (
+        {candidatosFiltrados.length === 0 ? (
           <Card variant="clean">
             <CardContent className="text-center py-12">
-              <p className="text-neutral-500">Nenhum candidato aguardando entrevista técnica no momento.</p>
+              <p className="text-neutral-500">
+                {vagaSelecionada === 'todas'
+                  ? 'Nenhum candidato aguardando entrevista técnica no momento.'
+                  : 'Nenhum candidato para esta vaga.'}
+              </p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {candidatos.map((candidato) => (
+            {candidatosFiltrados.map((candidato) => (
               <Card
                 key={candidato.id}
                 variant="clean"
