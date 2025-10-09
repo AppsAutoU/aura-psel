@@ -56,6 +56,7 @@ interface FormData {
   linkedin: string
   github: string
   portfolio: string
+  nivel_ingles: string
   
   // Motivação
   motivacao: string
@@ -100,7 +101,8 @@ export default function InscricaoPage() {
     linkedin: '',
     github: '',
     portfolio: '',
-    
+    nivel_ingles: '',
+
     motivacao: '',
     disponibilidade: '',
     
@@ -156,7 +158,8 @@ export default function InscricaoPage() {
   const validateForm = () => {
     const required = [
       'nome_completo', 'email', 'telefone', 'data_nascimento', 'cidade', 'estado',
-      'nivel_escolaridade', 'experiencia_anos', 'principais_skills', 'motivacao', 'disponibilidade', 'linkedin'
+      'nivel_escolaridade', 'experiencia_anos', 'principais_skills', 'linkedin', 'nivel_ingles',
+      'motivacao', 'disponibilidade'
     ]
 
     for (const field of required) {
@@ -247,7 +250,8 @@ export default function InscricaoPage() {
         linkedin: formData.linkedin,
         github: formData.github,
         portfolio: formData.portfolio,
-        
+        competencias_tecnicas: JSON.stringify({ nivel_ingles: formData.nivel_ingles }),
+
         motivacao: formData.motivacao,
         disponibilidade: formData.disponibilidade,
         
@@ -422,7 +426,7 @@ export default function InscricaoPage() {
               
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="telefone" variant="required">Telefone</Label>
+                  <Label htmlFor="telefone" variant="required">Whatsapp</Label>
                   <Input
                     id="telefone"
                     value={formData.telefone}
@@ -430,7 +434,7 @@ export default function InscricaoPage() {
                     placeholder="(11) 99999-9999"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="data_nascimento" variant="required">Data de Nascimento</Label>
                   <Input
@@ -637,7 +641,7 @@ export default function InscricaoPage() {
               
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label htmlFor="linkedin">LinkedIn <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="linkedin" variant="required">LinkedIn</Label>
                   <Input
                     id="linkedin"
                     value={formData.linkedin}
@@ -646,7 +650,7 @@ export default function InscricaoPage() {
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="github">GitHub</Label>
                   <Input
@@ -656,7 +660,7 @@ export default function InscricaoPage() {
                     placeholder="https://github.com/..."
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="portfolio">Portfolio/Site</Label>
                   <Input
@@ -666,6 +670,24 @@ export default function InscricaoPage() {
                     placeholder="https://meusite.com"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nivel_ingles" variant="required">Nível de Inglês</Label>
+                <select
+                  id="nivel_ingles"
+                  value={formData.nivel_ingles}
+                  onChange={(e) => handleInputChange('nivel_ingles', e.target.value)}
+                  className="input-clean"
+                  required
+                >
+                  <option value="">Selecione</option>
+                  <option value="Básico">Básico</option>
+                  <option value="Intermediário">Intermediário</option>
+                  <option value="Avançado">Avançado</option>
+                  <option value="Fluente">Fluente</option>
+                  <option value="Nativo">Nativo</option>
+                </select>
               </div>
             </CardContent>
           </Card>

@@ -71,25 +71,26 @@ export default function InscricaoPage() {
     cidade: '',
     estado: '',
     pais: 'Brasil',
-    
+
     // Formação Acadêmica
     nivel_escolaridade: '',
     curso: '',
     instituicao: '',
     ano_conclusao: '',
-    
+
     // Experiência Profissional
     experiencia_anos: '',
     cargo_atual: '',
     empresa_atual: '',
     salario_pretendido: '',
-    
+
     // Skills e Portfolio
     principais_skills: '',
     linkedin: '',
     github: '',
     portfolio: '',
-    
+    nivel_ingles: '',
+
     // Motivação e Disponibilidade
     motivacao: '',
     disponibilidade: '',
@@ -178,21 +179,22 @@ export default function InscricaoPage() {
   const validateForm = () => {
     const required = [
       'nome_completo', 'email', 'telefone', 'data_nascimento', 'cidade', 'estado',
-      'nivel_escolaridade', 'experiencia_anos', 'principais_skills', 'motivacao', 'disponibilidade'
+      'nivel_escolaridade', 'experiencia_anos', 'principais_skills', 'linkedin', 'nivel_ingles',
+      'motivacao', 'disponibilidade'
     ]
-    
+
     for (const field of required) {
       if (!formData[field as keyof typeof formData]) {
         setError(`Campo obrigatório: ${field.replace('_', ' ')}`)
         return false
       }
     }
-    
+
     if (!cvFile) {
       setError('Currículo é obrigatório')
       return false
     }
-    
+
     return true
   }
 
@@ -289,6 +291,7 @@ export default function InscricaoPage() {
         linkedin: formData.linkedin || null,
         github: formData.github || null,
         portfolio: formData.portfolio || null,
+        competencias_tecnicas: JSON.stringify({ nivel_ingles: formData.nivel_ingles || null }),
         
         // Motivação e Disponibilidade
         motivacao: formData.motivacao || null,
@@ -296,9 +299,9 @@ export default function InscricaoPage() {
         
         curriculo_url,
         carta_apresentacao_url: carta_url,
-        
-        status: 'inscrito',
-        fase_atual: 'inscricao',
+
+        status: 'em_avaliacao_ia',
+        fase_atual: 'avaliacao_ia',
         data_inscricao: new Date().toISOString()
       }
 
@@ -307,13 +310,27 @@ export default function InscricaoPage() {
         .insert([candidatoData])
         .select('id, consulta_token')
         .single()
-      
+
       if (insertError) throw insertError
-      
+
       // Guardar informações da candidatura
       setSubmittedCandidaturaId(newCandidatura.id)
       setConsultaToken(newCandidatura.consulta_token)
-      
+
+      // Iniciar avaliação IA automaticamente em background
+      if (newCandidatura?.id) {
+        console.log(`🤖 Iniciando avaliação IA automática para candidato ${newCandidatura.id}`)
+
+        fetch('/api/ai/avaliar-candidato', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ candidato_id: newCandidatura.id })
+        }).catch(err => {
+          console.error('Erro ao iniciar avaliação IA:', err)
+          // Não falhar a candidatura se a IA falhar
+        })
+      }
+
       // Enviar email de confirmação (sem aguardar resposta para não bloquear o usuário)
       fetch('/api/emails/send-notification', {
         method: 'POST',
@@ -489,7 +506,7 @@ export default function InscricaoPage() {
                 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="telefone" variant="required">Telefone</Label>
+                  <Label htmlFor="telefone" variant="required">Whatsapp</Label>
                   <Input
                     id="telefone"
                     value={formData.telefone}
@@ -497,7 +514,7 @@ export default function InscricaoPage() {
                     placeholder="(11) 99999-9999"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="data_nascimento" variant="required">Data de Nascimento</Label>
                   <Input
@@ -704,7 +721,7 @@ export default function InscricaoPage() {
                 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label htmlFor="linkedin">LinkedIn</Label>
+                  <Label htmlFor="linkedin" variant="required">LinkedIn</Label>
                   <Input
                     id="linkedin"
                     value={formData.linkedin}
@@ -712,7 +729,7 @@ export default function InscricaoPage() {
                     placeholder="https://linkedin.com/in/..."
                   />
                 </div>
-                  
+
                 <div className="space-y-2">
                   <Label htmlFor="github">GitHub</Label>
                   <Input
@@ -722,7 +739,7 @@ export default function InscricaoPage() {
                     placeholder="https://github.com/..."
                   />
                 </div>
-                  
+
                 <div className="space-y-2">
                   <Label htmlFor="portfolio">Portfolio/Site</Label>
                   <Input
@@ -732,6 +749,23 @@ export default function InscricaoPage() {
                     placeholder="https://meusite.com"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nivel_ingles" variant="required">Nível de Inglês</Label>
+                <select
+                  id="nivel_ingles"
+                  value={formData.nivel_ingles}
+                  onChange={(e) => handleInputChange('nivel_ingles', e.target.value)}
+                  className="input-clean"
+                >
+                  <option value="">Selecione</option>
+                  <option value="Básico">Básico</option>
+                  <option value="Intermediário">Intermediário</option>
+                  <option value="Avançado">Avançado</option>
+                  <option value="Fluente">Fluente</option>
+                  <option value="Nativo">Nativo</option>
+                </select>
               </div>
             </CardContent>
           </Card>

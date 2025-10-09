@@ -6,25 +6,45 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/admin/candidatos/page": [
+    "/candidato/status/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/candidatos/page.js"
-    ],
-    "/admin/historico/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/historico/page.js"
+      "static/chunks/app/candidato/status/page.js"
     ],
     "/admin/candidatos/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/admin/candidatos/[id]/page.js"
     ],
-    "/admin/vagas/[id]/candidatos/page": [
+    "/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/vagas/[id]/candidatos/page.js"
+      "static/chunks/app/page.js"
+    ],
+    "/candidato/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/candidato/page.js"
+    ],
+    "/candidato/auth/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/candidato/auth/login/page.js"
+    ],
+    "/avaliador/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/avaliador/page.js"
+    ],
+    "/avaliador/auth/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/avaliador/auth/login/page.js"
+    ],
+    "/avaliador/entrevistas/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/avaliador/entrevistas/page.js"
     ]
   }
 }

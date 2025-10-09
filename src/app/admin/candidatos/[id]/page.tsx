@@ -23,6 +23,7 @@ interface Candidato {
   empresa_atual?: string
   cargo_atual?: string
   tempo_experiencia_total?: number
+  experiencia_anos?: number
   principais_skills?: string
   linguagens_programacao?: string
   nivel_ingles?: string
@@ -315,7 +316,7 @@ export default function CandidatoDetalhesPage() {
       'inscrito': 'Inscrito',
       'em_avaliacao_ia': 'Em Avaliação IA',
       'reprovado_ia': 'Reprovado IA',
-      'case_enviado': 'Case Enviado',
+      'case_enviado': 'Aguardando Resposta do Case pelo Candidato',
       'em_avaliacao_case': 'Avaliando Case',
       'aprovado_case': 'Case Aprovado',
       'reprovado_case': 'Case Reprovado',
@@ -414,7 +415,7 @@ export default function CandidatoDetalhesPage() {
               <option value="inscrito">Inscrito</option>
               <option value="em_avaliacao_ia">Em Avaliação IA</option>
               <option value="reprovado_ia">Reprovado IA</option>
-              <option value="case_enviado">Case Enviado</option>
+              <option value="case_enviado">Aguardando Resposta do Case pelo Candidato</option>
               <option value="em_avaliacao_case">Avaliando Case</option>
               <option value="aprovado_case">Case Aprovado</option>
               <option value="reprovado_case">Case Reprovado</option>
@@ -470,14 +471,29 @@ export default function CandidatoDetalhesPage() {
                   <div>
                     <label className="text-sm font-medium text-gray-500">Tempo de Experiência</label>
                     <p className="text-gray-900">
-                      {candidato.tempo_experiencia_total 
-                        ? `${Math.floor(candidato.tempo_experiencia_total/12)} anos e ${candidato.tempo_experiencia_total % 12} meses`
+                      {candidato.experiencia_anos
+                        ? `${candidato.experiencia_anos} anos`
                         : 'Não informado'}
                     </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Nível de Inglês</label>
-                    <p className="text-gray-900">{candidato.nivel_ingles || 'Não informado'}</p>
+                    <p className="text-gray-900">
+                      {(() => {
+                        try {
+                          if (candidato.nivel_ingles) return candidato.nivel_ingles;
+                          if (candidato.competencias_tecnicas) {
+                            const comp = typeof candidato.competencias_tecnicas === 'string'
+                              ? JSON.parse(candidato.competencias_tecnicas)
+                              : candidato.competencias_tecnicas;
+                            return comp?.nivel_ingles || 'Não informado';
+                          }
+                          return 'Não informado';
+                        } catch {
+                          return 'Não informado';
+                        }
+                      })()}
+                    </p>
                   </div>
                 </div>
                 
@@ -520,6 +536,84 @@ export default function CandidatoDetalhesPage() {
               <div className="bg-white rounded-xl border border-gray-200/60 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Motivação</h2>
                 <p className="text-gray-900 whitespace-pre-wrap">{candidato.motivacao}</p>
+              </div>
+            )}
+
+            {/* Avaliação IA */}
+            {candidato.analise_ia_completa && candidato.score_ia !== null && candidato.score_ia !== undefined && (
+              <div className="bg-white rounded-xl border border-gray-200/60 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-semibold text-gray-900">Avaliação IA</h2>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      {candidato.score_ia}/10
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Score</p>
+                  </div>
+                </div>
+
+                {/* Justificativa Completa */}
+                {candidato.analise_ia_completa.justificativa && (
+                  <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-2">Justificativa Do Score IA</h3>
+                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {candidato.analise_ia_completa.justificativa}
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Pontos Fortes */}
+                  {candidato.analise_ia_completa.pontos_fortes && candidato.analise_ia_completa.pontos_fortes.length > 0 && (
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-100">
+                      <h3 className="text-sm font-semibold text-green-900 mb-3 flex items-center gap-2">
+                        <span>✅</span> Pontos Fortes
+                      </h3>
+                      <ul className="space-y-2">
+                        {candidato.analise_ia_completa.pontos_fortes.map((ponto, index) => (
+                          <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
+                            <span className="text-green-600 mt-0.5">•</span>
+                            <span>{ponto}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Pontos de Melhoria */}
+                  {candidato.analise_ia_completa.pontos_melhoria && candidato.analise_ia_completa.pontos_melhoria.length > 0 && (
+                    <div className="p-4 bg-orange-50 rounded-lg border border-orange-100">
+                      <h3 className="text-sm font-semibold text-orange-900 mb-3 flex items-center gap-2">
+                        <span>⚠️</span> Pontos de Melhoria
+                      </h3>
+                      <ul className="space-y-2">
+                        {candidato.analise_ia_completa.pontos_melhoria.map((ponto, index) => (
+                          <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
+                            <span className="text-orange-600 mt-0.5">•</span>
+                            <span>{ponto}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* Recomendação */}
+                {candidato.analise_ia_completa.recomendacao && (
+                  <div className={`mt-4 p-3 rounded-lg border text-center ${
+                    candidato.analise_ia_completa.recomendacao === 'aprovar'
+                      ? 'bg-green-50 border-green-200'
+                      : 'bg-red-50 border-red-200'
+                  }`}>
+                    <span className={`text-sm font-semibold ${
+                      candidato.analise_ia_completa.recomendacao === 'aprovar'
+                        ? 'text-green-900'
+                        : 'text-red-900'
+                    }`}>
+                      Recomendação: {candidato.analise_ia_completa.recomendacao === 'aprovar' ? 'Aprovar' : 'Reprovar'}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -622,93 +716,6 @@ export default function CandidatoDetalhesPage() {
               </div>
             </div>
 
-            {/* Score IA */}
-            {candidato.score_ia !== null && candidato.score_ia !== undefined && (
-              <div className="bg-white rounded-xl border border-gray-200/60 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Avaliação IA</h2>
-                <div className="flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-blue-600">
-                      {candidato.score_ia}/10
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">Score de Compatibilidade</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Justificativa da IA */}
-            {candidato.analise_ia_completa && (
-              <div className="bg-white rounded-xl border border-gray-200/60 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Justificativa para a nota IA</h2>
-
-                {/* Justificativa Principal */}
-                {candidato.analise_ia_completa.justificativa && (
-                  <div className="mb-4">
-                    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
-                      {candidato.analise_ia_completa.justificativa}
-                    </p>
-                  </div>
-                )}
-
-                {/* Adequação à Vaga */}
-                {candidato.analise_ia_completa.adequacao_vaga && (
-                  <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                    <h3 className="text-sm font-semibold text-blue-900 mb-2">Adequação à Vaga</h3>
-                    <p className="text-sm text-blue-800 leading-relaxed">
-                      {candidato.analise_ia_completa.adequacao_vaga}
-                    </p>
-                  </div>
-                )}
-
-                {/* Pontos Fortes */}
-                {candidato.analise_ia_completa.pontos_fortes && candidato.analise_ia_completa.pontos_fortes.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-green-900 mb-2">✅ Pontos Fortes</h3>
-                    <ul className="space-y-1.5">
-                      {candidato.analise_ia_completa.pontos_fortes.map((ponto, index) => (
-                        <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
-                          <span className="text-green-600 mt-0.5">•</span>
-                          <span>{ponto}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Pontos de Melhoria */}
-                {candidato.analise_ia_completa.pontos_melhoria && candidato.analise_ia_completa.pontos_melhoria.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-orange-900 mb-2">⚠️ Pontos de Melhoria</h3>
-                    <ul className="space-y-1.5">
-                      {candidato.analise_ia_completa.pontos_melhoria.map((ponto, index) => (
-                        <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
-                          <span className="text-orange-600 mt-0.5">•</span>
-                          <span>{ponto}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Recomendação */}
-                {candidato.analise_ia_completa.recomendacao && (
-                  <div className={`p-3 rounded-lg border ${
-                    candidato.analise_ia_completa.recomendacao === 'aprovar'
-                      ? 'bg-green-50 border-green-200'
-                      : 'bg-red-50 border-red-200'
-                  }`}>
-                    <span className={`text-sm font-semibold ${
-                      candidato.analise_ia_completa.recomendacao === 'aprovar'
-                        ? 'text-green-900'
-                        : 'text-red-900'
-                    }`}>
-                      Recomendação: {candidato.analise_ia_completa.recomendacao === 'aprovar' ? '✅ Aprovar' : '❌ Reprovar'}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Notas Internas */}
             <div className="bg-white rounded-xl border border-gray-200/60 p-6">

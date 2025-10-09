@@ -30,6 +30,7 @@ interface Candidato {
   experiencia_anos?: number
   cargo_atual?: string
   principais_skills?: string
+  linkedin?: string
   score_ia?: number
   status: string
   vaga_id: string
@@ -94,7 +95,7 @@ export default function CandidatosPage() {
     const transitions: Record<string, { next: string; reject: string; stage: string }> = {
       'inscrito': { next: 'em_avaliacao_ia', reject: 'reprovado_ia', stage: 'Inscrição' },
       'em_avaliacao_ia': { next: 'case_enviado', reject: 'reprovado_ia', stage: 'Avaliação IA' },
-      'case_enviado': { next: 'entrevista_tecnica', reject: 'reprovado_case', stage: 'Case Prático' },
+      'case_enviado': { next: 'entrevista_tecnica', reject: 'reprovado_case', stage: 'Aguardando Resposta do Case pelo Candidato' },
       'entrevista_tecnica': { next: 'entrevista_socios', reject: 'reprovado', stage: 'Entrevista Técnica' },
       'entrevista_socios': { next: 'contratado', reject: 'reprovado_socios', stage: 'Entrevista com Sócios' }
     }
@@ -368,7 +369,7 @@ export default function CandidatosPage() {
 
       // 🔵 Processos aguardando (azul)
       'inscrito': 'blue-light',              // 1. Inscrito
-      'case_enviado': 'blue-medium',         // 4. Case Enviado
+      'case_enviado': 'blue-medium',         // 4. Aguardando Resposta do Case pelo Candidato
       'entrevista_tecnica': 'violet',        // 6. Aguardando Entrevista Técnica
       'entrevista_socios': 'pink',           // 8. Aguardando Entrevista com Sócios
 
@@ -395,7 +396,7 @@ export default function CandidatosPage() {
       'inscrito': 'Inscrito',
       'em_avaliacao_ia': 'Em Avaliação IA',
       'reprovado_ia': 'Reprovado pela IA',
-      'case_enviado': 'Case Enviado',
+      'case_enviado': 'Aguardando Resposta do Case pelo Candidato',
       'reprovado_case': 'Case Reprovado',
       'entrevista_tecnica': 'Aguardando Entrevista Técnica',
       'reprovado': 'Reprovado na Entrevista Técnica',
@@ -494,7 +495,13 @@ export default function CandidatosPage() {
             className="input-clean max-w-xs"
           >
             <option value="">Todos os status</option>
-            {Object.keys(estatisticas.porStatus).map(status => (
+            {[
+              'inscrito',
+              'em_avaliacao_ia',
+              'case_enviado',
+              'entrevista_tecnica',
+              'entrevista_socios'
+            ].filter(status => estatisticas.porStatus[status]).map(status => (
               <option key={status} value={status}>
                 {getStatusLabel(status)} ({estatisticas.porStatus[status]})
               </option>
@@ -518,7 +525,7 @@ export default function CandidatosPage() {
         {/* Lista de Candidatos */}
         <div className="space-y-4">
           {candidatosFiltrados.map((candidato) => (
-            <Card key={candidato.id} variant="clean" className={candidato.status === 'entrevista_socios' ? 'border-l-4 border-l-pink-500 bg-pink-50/30' : ''}>
+            <Card key={candidato.id} variant="clean" className={candidato.status === 'entrevista_socios' ? 'relative border-l-4 border-l-transparent bg-white overflow-hidden before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-gradient-to-b before:from-purple-500 before:via-pink-500 before:to-purple-500 before:animate-pulse' : ''}>
               <CardContent>
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
@@ -557,12 +564,26 @@ export default function CandidatosPage() {
                       <div>
                         <strong>Inscrição:</strong> {format(new Date(candidato.data_inscricao), 'dd/MM/yyyy', { locale: ptBR })}
                       </div>
+                      <div>
+                        <strong>LinkedIn:</strong> {candidato.linkedin ? (
+                          <a
+                            href={candidato.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 hover:underline ml-1"
+                          >
+                            Ver perfil →
+                          </a>
+                        ) : (
+                          <span className="text-neutral-400 ml-1">LinkedIn não informado</span>
+                        )}
+                      </div>
                     </div>
 
                     {candidato.principais_skills && (
-                      <div className="mt-3">
-                        <strong className="text-body-small">Skills:</strong>
-                        <p className="text-body-small text-neutral-600">{candidato.principais_skills}</p>
+                      <div className="mt-3 text-body-small text-neutral-600">
+                        <strong>Skills:</strong>
+                        <p className="mt-1">{candidato.principais_skills}</p>
                       </div>
                     )}
                   </div>
@@ -574,16 +595,17 @@ export default function CandidatosPage() {
                           onClick={() => aprovarParaProximaEtapa(candidato.id, candidato.status)}
                           variant="default"
                           size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white"
+                          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200"
                         >
-                          ✓ Aprovar Para Próxima Etapa
+                          Aprovar Para Próxima Etapa
                         </Button>
                         <Button
                           onClick={() => reprovarCandidatoNaEtapa(candidato.id, candidato.status)}
-                          variant="destructive"
+                          variant="outline"
                           size="sm"
+                          className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
                         >
-                          ✗ Reprovar Nesta Etapa
+                          Reprovar Nesta Etapa
                         </Button>
                       </>
                     ) : (

@@ -149,7 +149,7 @@ function StatusPageContent() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <span className="text-body-small text-neutral-600">Status:</span>
                 <div>
@@ -158,17 +158,7 @@ function StatusPageContent() {
                   </Badge>
                 </div>
               </div>
-              
-              {candidato.score_ia && (
-                <div className="space-y-2">
-                  <span className="text-body-small text-neutral-600">Score IA:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-heading-3">{candidato.score_ia}/10</span>
-                    <Award className="h-4 w-4 text-yellow-500" />
-                  </div>
-                </div>
-              )}
-              
+
               <div className="space-y-2">
                 <span className="text-body-small text-neutral-600">Data de Inscrição:</span>
                 <div className="flex items-center gap-2">
@@ -274,18 +264,20 @@ function StatusPageContent() {
               <ProcessStep
                 title="Inscrição"
                 completed={true}
-                active={candidato.fase_atual === 'inscricao'}
+                active={false}
+                hideTag={true}
               />
               <ProcessStep
                 title="Avaliação Inicial (IA)"
-                completed={['case_pratico', 'avaliacao_case', 'entrevista_tecnica', 'entrevista_socios', 'contratacao'].includes(candidato.fase_atual) || candidato.status.includes('reprovado')}
-                active={candidato.fase_atual === 'avaliacao_ia'}
+                completed={['case_pratico', 'avaliacao_case', 'entrevista_tecnica', 'entrevista_socios', 'contratacao'].includes(candidato.fase_atual)}
+                active={candidato.fase_atual === 'avaliacao_ia' && candidato.status !== 'reprovado_ia'}
                 rejected={candidato.status === 'reprovado_ia'}
               />
               <ProcessStep
                 title="Case Prático"
                 completed={['avaliacao_case', 'entrevista_tecnica', 'entrevista_socios', 'contratacao'].includes(candidato.fase_atual)}
-                active={candidato.fase_atual === 'case_pratico'}
+                active={candidato.fase_atual === 'case_pratico' && candidato.status !== 'reprovado_case'}
+                rejected={candidato.status === 'reprovado_case'}
               />
               <ProcessStep
                 title="Avaliação do Case"
@@ -299,13 +291,14 @@ function StatusPageContent() {
               />
               <ProcessStep
                 title="Entrevista com Sócios"
-                completed={candidato.fase_atual === 'contratacao'}
-                active={candidato.fase_atual === 'entrevista_socios'}
+                completed={candidato.fase_atual === 'contratacao' || candidato.status === 'contratado'}
+                active={candidato.fase_atual === 'entrevista_socios' && candidato.status !== 'contratado'}
               />
               <ProcessStep
                 title="Contratação"
                 completed={candidato.status === 'contratado'}
-                active={candidato.fase_atual === 'contratacao'}
+                active={candidato.fase_atual === 'contratacao' && candidato.status !== 'contratado'}
+                hired={candidato.status === 'contratado'}
               />
             </div>
           </CardContent>
@@ -343,11 +336,13 @@ export default function StatusPage() {
   )
 }
 
-function ProcessStep({ title, completed, active, rejected }: { title: string; completed: boolean; active: boolean; rejected?: boolean }) {
+function ProcessStep({ title, completed, active, rejected, hired, hideTag }: { title: string; completed: boolean; active: boolean; rejected?: boolean; hired?: boolean; hideTag?: boolean }) {
   return (
     <div className="flex items-center gap-4 p-3 rounded-lg transition-all duration-300 hover:bg-neutral-50">
       <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-        rejected
+        hired
+          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+          : rejected
           ? 'bg-red-500 text-white shadow-md'
           : completed
           ? 'bg-green-500 text-white shadow-md'
@@ -355,7 +350,9 @@ function ProcessStep({ title, completed, active, rejected }: { title: string; co
           ? 'bg-gradient-cosmic text-white shadow-lg'
           : 'bg-neutral-200 text-neutral-500'
       }`}>
-        {rejected ? (
+        {hired ? (
+          <span className="text-xl">🎉</span>
+        ) : rejected ? (
           <AlertCircle className="h-5 w-5" />
         ) : completed ? (
           <CheckCircle className="h-5 w-5" />
@@ -366,7 +363,9 @@ function ProcessStep({ title, completed, active, rejected }: { title: string; co
         )}
       </div>
       <span className={`text-body ${
-        rejected
+        hired
+          ? 'text-purple-700 font-bold'
+          : rejected
           ? 'text-red-700 font-semibold'
           : active
           ? 'font-semibold text-neutral-900'
@@ -376,14 +375,24 @@ function ProcessStep({ title, completed, active, rejected }: { title: string; co
       }`}>
         {title}
       </span>
-      {rejected && (
-        <Badge variant="error" className="ml-auto text-xs">
-          Não Aprovado
+      {!hideTag && hired && (
+        <Badge className="ml-auto text-xs bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 border-purple-200">
+          🎉 Contratado
         </Badge>
       )}
-      {active && !rejected && (
+      {!hideTag && rejected && !hired && (
+        <Badge variant="error" className="ml-auto text-xs">
+          Reprovado
+        </Badge>
+      )}
+      {!hideTag && active && !rejected && !hired && (
         <Badge variant="cosmic" className="ml-auto text-xs">
           Atual
+        </Badge>
+      )}
+      {!hideTag && completed && !active && !rejected && !hired && (
+        <Badge className="ml-auto text-xs bg-green-100 text-green-700 border-green-200">
+          Aprovado
         </Badge>
       )}
     </div>

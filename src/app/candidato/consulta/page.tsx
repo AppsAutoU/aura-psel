@@ -120,7 +120,7 @@ export default function ConsultaPage() {
       'inscrito': { variant: 'info', text: 'Inscrito', icon: CheckCircle },
       'em_avaliacao_ia': { variant: 'warning', text: 'Em Avaliação', icon: Clock },
       'reprovado_ia': { variant: 'error', text: 'Não Aprovado', icon: XCircle },
-      'case_enviado': { variant: 'info', text: 'Case Enviado', icon: FileText },
+      'case_enviado': { variant: 'info', text: 'Aguardando Resposta do Case pelo Candidato', icon: FileText },
       'em_avaliacao_case': { variant: 'warning', text: 'Case em Análise', icon: Clock },
       'aprovado_case': { variant: 'success', text: 'Case Aprovado', icon: CheckCircle },
       'reprovado_case': { variant: 'error', text: 'Case Reprovado', icon: XCircle },

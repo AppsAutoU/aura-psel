@@ -68,10 +68,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50/50">
+    <div className="flex min-h-screen bg-gradient-to-b from-purple-100 via-purple-50 to-pink-50">
       {/* Sidebar */}
       <div className={cn(
-        'bg-white border-r border-gray-200/60 transition-all duration-300 flex flex-col',
+        'bg-white border-r border-gray-200/60 transition-all duration-300 flex flex-col min-h-screen',
         sidebarCollapsed ? 'w-16' : 'w-64'
       )}>
         {/* Logo */}

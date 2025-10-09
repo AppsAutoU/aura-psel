@@ -343,7 +343,7 @@ export default function CandidatosVagaPage() {
                     <option value="inscrito">Inscrito</option>
                     <option value="em_avaliacao_ia">Em Avaliação IA</option>
                     <option value="reprovado_ia">Reprovado IA</option>
-                    <option value="case_enviado">Case Enviado</option>
+                    <option value="case_enviado">Aguardando Resposta do Case pelo Candidato</option>
                     <option value="em_avaliacao_case">Avaliando Case</option>
                     <option value="aprovado_case">Case Aprovado</option>
                     <option value="reprovado_case">Case Reprovado</option>

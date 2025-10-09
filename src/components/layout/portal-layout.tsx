@@ -18,15 +18,15 @@ interface PortalLayoutProps {
 
 export function PortalLayout({ children, user, className, onLogout }: PortalLayoutProps) {
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-gradient-to-b from-purple-100 via-purple-50 to-pink-50">
       {/* Header */}
       <Header user={user} onLogout={onLogout} />
-      
+
       {/* Main Layout */}
       <div className="flex">
         {/* Sidebar */}
         <Sidebar />
-        
+
         {/* Main Content */}
         <main className={cn("flex-1", className)}>
           <div className="p-8">

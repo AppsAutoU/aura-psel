@@ -83,7 +83,7 @@ export default function HistoricoPage() {
     const statusMap: Record<string, { label: string; color: string; fase: string }> = {
       'aprovado_ia': { label: 'Aprovado', color: 'bg-green-100 text-green-800 border-green-200', fase: 'Score de Compatibilidade' },
       'reprovado_ia': { label: 'Reprovado', color: 'bg-red-100 text-red-800 border-red-200', fase: 'Score de Compatibilidade' },
-      'case_enviado': { label: 'Em Avaliação', color: 'bg-blue-100 text-blue-800 border-blue-200', fase: 'Case Prático' },
+      'case_enviado': { label: 'Aguardando Resposta do Case pelo Candidato', color: 'bg-blue-100 text-blue-800 border-blue-200', fase: 'Case Prático' },
       'em_avaliacao_case': { label: 'Em Avaliação', color: 'bg-blue-100 text-blue-800 border-blue-200', fase: 'Case Prático' },
       'aprovado_case': { label: 'Aprovado', color: 'bg-green-100 text-green-800 border-green-200', fase: 'Case Prático' },
       'reprovado_case': { label: 'Reprovado', color: 'bg-red-100 text-red-800 border-red-200', fase: 'Case Prático' },
