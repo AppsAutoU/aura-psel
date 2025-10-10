@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Executar Migration - Sistema de Avaliadores</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 800px;
+      width: 100%;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #64748b;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+
+    .info-box {
+      background: #f1f5f9;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 8px;
+    }
+
+    .info-box h2 {
+      color: #334155;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+
+    .info-box ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .info-box li {
+      color: #475569;
+      padding: 8px 0;
+      padding-left: 25px;
+      position: relative;
+    }
+
+    .info-box li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #667eea;
+      font-weight: bold;
+    }
+
+    .button-container {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    button {
+      flex: 1;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-primary:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .btn-secondary:hover {
+      background: #cbd5e1;
+    }
+
+    .logs-container {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      max-height: 400px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .logs-container.show {
+      display: block;
+    }
+
+    .log-line {
+      margin: 5px 0;
+    }
+
+    .log-success {
+      color: #4ade80;
+    }
+
+    .log-error {
+      color: #f87171;
+    }
+
+    .log-warning {
+      color: #fbbf24;
+    }
+
+    .log-info {
+      color: #60a5fa;
+    }
+
+    .spinner {
+      border: 3px solid #f3f4f6;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .status {
+      padding: 10px 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .status.show {
+      display: block;
+    }
+
+    .status.success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Migration: Sistema de Avaliadores Especializados</h1>
+    <p class="subtitle">Execute a migration para habilitar o sistema de tipos de avaliadores e filtragem por especialização</p>
+
+    <div class="info-box">
+      <h2>📋 O que esta migration faz:</h2>
+      <ul>
+        <li>Adiciona campo <code>tipo_avaliador</code> na tabela de usuários (desenvolvimento, design, consultoria, generalista)</li>
+        <li>Adiciona campo <code>pode_avaliar_tudo</code> para permissão de acesso total</li>
+        <li>Adiciona campo <code>tipo_vaga</code> na tabela de vagas</li>
+        <li>Cria tabela <code>aura_jobs_avaliador_vagas</code> para atribuições manuais</li>
+        <li>Cria índices para otimização de performance</li>
+      </ul>
+    </div>
+
+    <div class="button-container">
+      <button id="executeBtn" class="btn-primary" onclick="executeMigration()">
+        ▶ Executar Migration
+      </button>
+      <button class="btn-secondary" onclick="window.location.href='http://localhost:3000/admin'">
+        🏠 Voltar ao Admin
+      </button>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div id="logs" class="logs-container"></div>
+  </div>
+
+  <script>
+    async function executeMigration() {
+      const btn = document.getElementById('executeBtn')
+      const logsContainer = document.getElementById('logs')
+      const statusContainer = document.getElementById('status')
+
+      // Resetar
+      logsContainer.innerHTML = ''
+      logsContainer.classList.add('show')
+      statusContainer.classList.remove('show')
+      btn.disabled = true
+      btn.innerHTML = '<span class="spinner"></span> Executando...'
+
+      addLog('🚀 Iniciando migration...', 'info')
+
+      try {
+        const response = await fetch('http://localhost:3000/api/admin/executar-migration-avaliadores', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+
+        const result = await response.json()
+
+        if (result.success) {
+          // Exibir logs
+          if (result.logs && Array.isArray(result.logs)) {
+            result.logs.forEach(log => {
+              addLog(log)
+            })
+          }
+
+          // Status de sucesso
+          statusContainer.textContent = '✅ Migration executada com sucesso!'
+          statusContainer.className = 'status success show'
+
+          addLog('\n✅ MIGRATION CONCLUÍDA!', 'success')
+          addLog('Você agora pode acessar Admin > Avaliadores', 'info')
+
+          btn.innerHTML = '✓ Migration Concluída'
+          btn.style.background = '#22c55e'
+        } else {
+          throw new Error(result.error || 'Erro desconhecido')
+        }
+      } catch (error) {
+        addLog(`❌ ERRO: ${error.message}`, 'error')
+        statusContainer.textContent = `❌ Erro ao executar migration: ${error.message}`
+        statusContainer.className = 'status error show'
+        btn.disabled = false
+        btn.innerHTML = '🔄 Tentar Novamente'
+      }
+    }
+
+    function addLog(message, type = 'default') {
+      const logsContainer = document.getElementById('logs')
+      const logLine = document.createElement('div')
+      logLine.className = 'log-line'
+
+      if (message.includes('✅')) {
+        logLine.classList.add('log-success')
+      } else if (message.includes('❌')) {
+        logLine.classList.add('log-error')
+      } else if (message.includes('⚠️') || message.includes('💡')) {
+        logLine.classList.add('log-warning')
+      } else if (message.includes('📝') || message.includes('🔍')) {
+        logLine.classList.add('log-info')
+      }
+
+      logLine.textContent = message
+      logsContainer.appendChild(logLine)
+      logsContainer.scrollTop = logsContainer.scrollHeight
+    }
+  </script>
+</body>
+</html>

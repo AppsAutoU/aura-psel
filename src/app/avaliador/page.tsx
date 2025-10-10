@@ -19,6 +19,22 @@ interface Candidato {
   case_descricao?: string
 }
 
+interface CaseEntrega {
+  id: string
+  candidato_id: string
+  vaga_id?: string
+  nome_completo: string
+  email: string
+  tipo_case: string
+  link_entregavel_1?: string
+  link_entregavel_2?: string
+  link_entregavel_3?: string
+  comentarios_adicionais?: string
+  source?: string
+  data_submissao: string
+  ip_submissao?: string
+}
+
 interface Vaga {
   id: string
   titulo: string
@@ -32,6 +48,8 @@ export default function CasesPraticosPage() {
   const [vagas, setVagas] = useState<Vaga[]>([])
   const [vagaSelecionada, setVagaSelecionada] = useState<string>('todas')
   const [selectedCandidato, setSelectedCandidato] = useState<Candidato | null>(null)
+  const [caseEntrega, setCaseEntrega] = useState<CaseEntrega | null>(null)
+  const [loadingCase, setLoadingCase] = useState(false)
   const [avaliacao, setAvaliacao] = useState({
     nota_tecnica: '',
     nota_soft_skills: '',
@@ -43,8 +61,6 @@ export default function CasesPraticosPage() {
     comentarios_case: '',
     comentario_geral: '',
   })
-  const [caseSubmetido, setCaseSubmetido] = useState(false)
-  const [linkRespostaCase, setLinkRespostaCase] = useState('')
 
   useEffect(() => {
     if (user) {
@@ -53,21 +69,56 @@ export default function CasesPraticosPage() {
     }
   }, [user])
 
-  // Carregar estado do case quando selecionar candidato
+  // Carregar entrega do case quando selecionar candidato
   useEffect(() => {
     if (selectedCandidato) {
-      const casesSubmetidos = JSON.parse(localStorage.getItem('cases_submetidos') || '{}')
-      const caseInfo = casesSubmetidos[selectedCandidato.id]
-
-      if (caseInfo) {
-        setCaseSubmetido(caseInfo.submetido)
-        setLinkRespostaCase(caseInfo.link || '')
-      } else {
-        setCaseSubmetido(false)
-        setLinkRespostaCase('')
-      }
+      loadCaseEntrega(selectedCandidato.id)
     }
   }, [selectedCandidato])
+
+  // Função para buscar entrega do case (tenta banco primeiro, depois JSON)
+  const loadCaseEntrega = async (candidatoId: string) => {
+    setLoadingCase(true)
+    try {
+      const supabase = createClient()
+
+      // TENTAR BUSCAR DO BANCO PRIMEIRO
+      const { data: dbData, error: dbError } = await supabase
+        .from('aura_jobs_case_entregas')
+        .select('*')
+        .eq('candidato_id', candidatoId)
+        .order('data_submissao', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (!dbError && dbData) {
+        console.log('✅ Entrega encontrada no BANCO')
+        setCaseEntrega(dbData)
+        setLoadingCase(false)
+        return
+      }
+
+      // SE NÃO ENCONTROU NO BANCO, BUSCAR DO JSON
+      console.log('⚠️ Não encontrado no banco, buscando em JSON...')
+
+      const jsonResponse = await fetch(`/api/case/listar-json?candidato_id=${candidatoId}`)
+      const jsonResult = await jsonResponse.json()
+
+      if (jsonResult.success && jsonResult.data) {
+        console.log('✅ Entrega encontrada em JSON')
+        setCaseEntrega(jsonResult.data)
+      } else {
+        console.log('ℹ️ Nenhuma entrega encontrada')
+        setCaseEntrega(null)
+      }
+
+    } catch (err) {
+      console.error('Erro ao buscar entrega do case:', err)
+      setCaseEntrega(null)
+    } finally {
+      setLoadingCase(false)
+    }
+  }
 
   // Get case link based on job title
   const getCaseLink = (vagaTitulo: string): string => {
@@ -114,14 +165,37 @@ export default function CasesPraticosPage() {
     try {
       const supabase = createClient()
 
-      const { data, error} = await supabase
+      // Buscar informações do avaliador logado
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) return
+
+      const { data: avaliador } = await supabase
+        .from('aura_jobs_usuarios')
+        .select('id, tipo_avaliador, pode_avaliar_tudo')
+        .eq('email', authUser.email)
+        .single()
+
+      if (!avaliador) return
+
+      // Buscar vagas atribuídas manualmente ao avaliador
+      const { data: atribuicoes } = await supabase
+        .from('aura_jobs_avaliador_vagas')
+        .select('vaga_id')
+        .eq('avaliador_id', avaliador.id)
+
+      const vagasAtribuidas = atribuicoes?.map(a => a.vaga_id) || []
+
+      // Construir query de candidatos
+      let query = supabase
         .from('aura_jobs_candidatos')
         .select(`
           *,
-          vaga:aura_jobs_vagas!vaga_id(titulo)
+          vaga:aura_jobs_vagas!vaga_id(titulo, tipo_vaga)
         `)
         .in('status', ['case_enviado', 'em_avaliacao_case'])
         .order('created_at', { ascending: false })
+
+      const { data, error } = await query
 
       if (error) {
         console.error('Erro ao carregar candidatos:', error)
@@ -129,7 +203,36 @@ export default function CasesPraticosPage() {
       }
 
       if (data) {
-        const candidatosFormatados = data.map(c => {
+        // Filtrar candidatos baseado nas permissões do avaliador
+        const candidatosFiltrados = data.filter(c => {
+          const vaga = c.vaga as any
+          const tipoVaga = vaga?.tipo_vaga
+          const vagaId = c.vaga_id
+
+          // Se pode avaliar tudo, mostra todos
+          if (avaliador.pode_avaliar_tudo) {
+            return true
+          }
+
+          // Se a vaga foi atribuída manualmente ao avaliador
+          if (vagasAtribuidas.includes(vagaId)) {
+            return true
+          }
+
+          // Se o tipo da vaga corresponde ao tipo do avaliador
+          if (tipoVaga && avaliador.tipo_avaliador === tipoVaga) {
+            return true
+          }
+
+          // Se é generalista, pode ver todas
+          if (avaliador.tipo_avaliador === 'generalista') {
+            return true
+          }
+
+          return false
+        })
+
+        const candidatosFormatados = candidatosFiltrados.map(c => {
           const vagaTitulo = (c.vaga as any)?.titulo || 'Vaga não encontrada'
           return {
             id: c.id,
@@ -163,37 +266,20 @@ export default function CasesPraticosPage() {
     setAvaliacao(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleCaseSubmetidoChange = (submetido: boolean) => {
-    if (!selectedCandidato) return
-
-    setCaseSubmetido(submetido)
-
-    // Salvar no localStorage
-    const casesSubmetidos = JSON.parse(localStorage.getItem('cases_submetidos') || '{}')
-    casesSubmetidos[selectedCandidato.id] = {
-      submetido,
-      link: submetido ? linkRespostaCase : ''
-    }
-    localStorage.setItem('cases_submetidos', JSON.stringify(casesSubmetidos))
-
-    // Se desmarcar "submetido", limpar o link
-    if (!submetido) {
-      setLinkRespostaCase('')
-    }
-  }
-
-  const handleLinkRespostaCaseChange = (link: string) => {
-    if (!selectedCandidato) return
-
-    setLinkRespostaCase(link)
-
-    // Salvar no localStorage
-    const casesSubmetidos = JSON.parse(localStorage.getItem('cases_submetidos') || '{}')
-    casesSubmetidos[selectedCandidato.id] = {
-      submetido: caseSubmetido,
-      link
-    }
-    localStorage.setItem('cases_submetidos', JSON.stringify(casesSubmetidos))
+  const handleCloseModal = () => {
+    setSelectedCandidato(null)
+    setCaseEntrega(null)
+    setAvaliacao({
+      nota_tecnica: '',
+      nota_soft_skills: '',
+      nota_experiencia: '',
+      nota_case: '',
+      comentarios_tecnicos: '',
+      comentarios_soft_skills: '',
+      comentarios_experiencia: '',
+      comentarios_case: '',
+      comentario_geral: '',
+    })
   }
 
   const handleAprovarParaEntrevista = async () => {
@@ -235,18 +321,7 @@ export default function CasesPraticosPage() {
       }
 
       alert('Candidato aprovado para entrevista técnica!')
-      setSelectedCandidato(null)
-      setAvaliacao({
-        nota_tecnica: '',
-        nota_soft_skills: '',
-        nota_experiencia: '',
-        nota_case: '',
-        comentarios_tecnicos: '',
-        comentarios_soft_skills: '',
-        comentarios_experiencia: '',
-        comentarios_case: '',
-        comentario_geral: '',
-      })
+      handleCloseModal()
       loadCandidatos()
     } catch (error: any) {
       alert('Erro: ' + error.message)
@@ -292,18 +367,7 @@ export default function CasesPraticosPage() {
       }
 
       alert('Candidato reprovado no case.')
-      setSelectedCandidato(null)
-      setAvaliacao({
-        nota_tecnica: '',
-        nota_soft_skills: '',
-        nota_experiencia: '',
-        nota_case: '',
-        comentarios_tecnicos: '',
-        comentarios_soft_skills: '',
-        comentarios_experiencia: '',
-        comentarios_case: '',
-        comentario_geral: '',
-      })
+      handleCloseModal()
       loadCandidatos()
     } catch (error: any) {
       alert('Erro: ' + error.message)
@@ -416,66 +480,128 @@ export default function CasesPraticosPage() {
               <div className="mb-6 p-4 bg-gray-50 rounded">
                 <h3 className="font-semibold mb-3">Informações do Case</h3>
 
-                {/* Checkboxes para status do case */}
-                <div className="space-y-2 mb-4">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={!caseSubmetido}
-                      onChange={(e) => handleCaseSubmetidoChange(!e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">Aguardando Resposta do Candidato</span>
-                  </label>
+                {loadingCase ? (
+                  <div className="text-sm text-gray-600 py-4">
+                    Carregando informações do case...
+                  </div>
+                ) : caseEntrega ? (
+                  <div className="space-y-4">
+                    {/* Status: Case Submetido */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        ✅ Case Submetido
+                      </span>
+                      <span className="text-gray-600">
+                        em {new Date(caseEntrega.data_submissao).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
 
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={caseSubmetido}
-                      onChange={(e) => handleCaseSubmetidoChange(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">Case Submetido pelo Candidato</span>
-                  </label>
-                </div>
+                    {/* Origem (Source) */}
+                    {caseEntrega.source && (
+                      <div className="text-sm text-gray-700">
+                        <span className="font-medium">📍 Origem:</span>{' '}
+                        {caseEntrega.source === 'notion-dev' && 'Case de Desenvolvimento'}
+                        {caseEntrega.source === 'notion-design' && 'Case de Design/PO'}
+                        {caseEntrega.source === 'notion-consultoria' && 'Case de Consultoria'}
+                        {caseEntrega.source === 'direto' && 'Acesso Direto'}
+                      </div>
+                    )}
 
-                {/* Campo para link da resposta (aparece quando marca "Case Submetido") */}
-                {caseSubmetido && (
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium mb-1 text-gray-700">
-                      Link da Resposta do Candidato
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="Cole aqui o link da resposta submetida pelo candidato"
-                      value={linkRespostaCase}
-                      onChange={(e) => handleLinkRespostaCaseChange(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-md text-sm"
-                    />
-                    {linkRespostaCase && (
-                      <a
-                        href={linkRespostaCase}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline text-sm inline-block mt-2"
-                      >
-                        Ver a resposta enviada →
-                      </a>
+                    {/* Links dos Entregáveis */}
+                    {(caseEntrega.link_entregavel_1 || caseEntrega.link_entregavel_2 || caseEntrega.link_entregavel_3) && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">🔗 Entregáveis:</p>
+                        <div className="space-y-1">
+                          {caseEntrega.link_entregavel_1 && (
+                            <a
+                              href={caseEntrega.link_entregavel_1}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block text-sm text-blue-600 hover:underline"
+                            >
+                              • Link 1: {caseEntrega.link_entregavel_1.substring(0, 60)}...
+                            </a>
+                          )}
+                          {caseEntrega.link_entregavel_2 && (
+                            <a
+                              href={caseEntrega.link_entregavel_2}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block text-sm text-blue-600 hover:underline"
+                            >
+                              • Link 2: {caseEntrega.link_entregavel_2.substring(0, 60)}...
+                            </a>
+                          )}
+                          {caseEntrega.link_entregavel_3 && (
+                            <a
+                              href={caseEntrega.link_entregavel_3}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block text-sm text-blue-600 hover:underline"
+                            >
+                              • Link 3: {caseEntrega.link_entregavel_3.substring(0, 60)}...
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Comentários Adicionais do Candidato */}
+                    {caseEntrega.comentarios_adicionais && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-1">💬 Comentários do candidato:</p>
+                        <p className="text-sm text-gray-600 bg-white p-3 rounded border border-gray-200">
+                          {caseEntrega.comentarios_adicionais}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Link do case prático original */}
+                    {selectedCandidato.case_url && (
+                      <div className="pt-3 border-t border-gray-200">
+                        <a
+                          href={selectedCandidato.case_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-sm"
+                        >
+                          📄 Ver arquivo do case original →
+                        </a>
+                      </div>
                     )}
                   </div>
-                )}
+                ) : (
+                  <div className="space-y-3">
+                    {/* Status: Aguardando Resposta */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        ⏳ Aguardando Resposta do Candidato
+                      </span>
+                    </div>
 
-                {/* Link do case prático original */}
-                {selectedCandidato.case_url && (
-                  <div className="pt-3 border-t border-gray-200">
-                    <a
-                      href={selectedCandidato.case_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline text-sm"
-                    >
-                      Ver arquivo do case →
-                    </a>
+                    <p className="text-sm text-gray-600">
+                      O candidato ainda não submeteu a resposta do case prático.
+                    </p>
+
+                    {/* Link do case prático original */}
+                    {selectedCandidato.case_url && (
+                      <div className="pt-3 border-t border-gray-200">
+                        <a
+                          href={selectedCandidato.case_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-sm"
+                        >
+                          📄 Ver arquivo do case original →
+                        </a>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -577,7 +703,7 @@ export default function CasesPraticosPage() {
                 <div className="flex justify-end gap-4 pt-4 border-t">
                   <button
                     type="button"
-                    onClick={() => setSelectedCandidato(null)}
+                    onClick={handleCloseModal}
                     className="px-6 py-2 border rounded-md hover:bg-gray-50"
                   >
                     Cancelar

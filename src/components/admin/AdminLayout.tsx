@@ -43,6 +43,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       current: pathname.startsWith('/admin/historico')
     },
     {
+      name: 'Avaliadores',
+      href: '/admin/avaliadores',
+      icon: '👨‍⚖️',
+      current: pathname.startsWith('/admin/avaliadores')
+    },
+    {
       name: 'Usuários',
       href: '/admin/usuarios',
       icon: '👤',

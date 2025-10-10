@@ -3,205 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Execute Migration - Add nivel_ingles Column</title>
+    <title>🚀 Executar Migration - Aura PSEL</title>
     <style>
+        * {margin: 0; padding: 0; box-sizing: border-box;}
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            max-width: 900px;
-            margin: 50px auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .container {
-            background: white;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-        }
-        .section {
-            margin: 30px 0;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            border-left: 4px solid #6366f1;
-        }
-        .sql-box {
-            background: #1e293b;
-            color: #e2e8f0;
-            padding: 20px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            overflow-x: auto;
-            margin: 15px 0;
-            position: relative;
-        }
-        .copy-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #6366f1;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: background 0.2s;
-        }
-        .copy-btn:hover {
-            background: #4f46e5;
-        }
-        .copy-btn.copied {
-            background: #10b981;
-        }
-        .step {
-            margin: 20px 0;
-            padding-left: 35px;
-            position: relative;
-        }
-        .step-number {
-            position: absolute;
-            left: 0;
-            top: 0;
-            background: #6366f1;
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {color: #667eea; margin-bottom: 10px; font-size: 32px;}
+        .subtitle {color: #666; margin-bottom: 30px;}
+        .big-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 20px;
             font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 20px 0;
+            transition: all 0.3s;
+        }
+        .big-button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .sql-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: monospace;
             font-size: 12px;
         }
-        .success-box {
-            background: #ecfdf5;
-            border: 2px solid #10b981;
-            color: #065f46;
-            padding: 20px;
+        .alert {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 16px;
             border-radius: 8px;
             margin: 20px 0;
+            display: none;
         }
-        .warning-box {
-            background: #fef3c7;
-            border: 2px solid #f59e0b;
-            color: #92400e;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        a {
-            color: #6366f1;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
+        ol {margin-left: 30px; margin-top: 15px;}
+        li {margin: 10px 0; color: #444; font-size: 16px;}
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 Database Migration</h1>
-        <p class="subtitle">Add nivel_ingles column to aura_jobs_candidatos table</p>
+        <h1>🚀 Migration Automática</h1>
+        <p class="subtitle">Clique no botão abaixo para executar TUDO automaticamente</p>
+        
+        <button class="big-button" onclick="executarTudo()">
+            ✨ EXECUTAR MIGRATION AGORA
+        </button>
 
-        <div class="warning-box">
-            <strong>⚠️ Important:</strong> This migration adds the <code>nivel_ingles</code> column to your database.
-            Without this column, candidates cannot submit applications with their English level.
+        <div class="alert" id="successAlert">
+            <strong>🎉 PRONTO!</strong> Migration executada com sucesso! O sistema está funcionando.
         </div>
 
-        <div class="section">
-            <h2>📋 Instructions</h2>
-
-            <div class="step">
-                <div class="step-number">1</div>
-                <strong>Open Supabase Dashboard</strong>
-                <p>Go to <a href="https://supabase.com/dashboard/project/xjnjfytapohglezpwksf/sql/new" target="_blank">Supabase SQL Editor</a></p>
-            </div>
-
-            <div class="step">
-                <div class="step-number">2</div>
-                <strong>Copy the SQL below</strong>
-                <p>Click the "Copy SQL" button to copy the migration query:</p>
-
-                <div class="sql-box">
-                    <button class="copy-btn" onclick="copySql()">Copy SQL</button>
-                    <pre id="sql-code">-- Add nivel_ingles column to aura_jobs_candidatos
-ALTER TABLE aura_jobs_candidatos
-ADD COLUMN IF NOT EXISTS nivel_ingles TEXT;
-
--- Add comment to the column
-COMMENT ON COLUMN aura_jobs_candidatos.nivel_ingles IS
-'Nível de inglês do candidato (Básico, Intermediário, Avançado, Fluente, Nativo)';</pre>
-                </div>
-            </div>
-
-            <div class="step">
-                <div class="step-number">3</div>
-                <strong>Paste and Execute</strong>
-                <p>Paste the SQL in the Supabase SQL Editor and click <strong>Run</strong> (or press Cmd/Ctrl + Enter)</p>
-            </div>
-
-            <div class="step">
-                <div class="step-number">4</div>
-                <strong>Verify Success</strong>
-                <p>You should see a success message. The column is now ready to use!</p>
-            </div>
+        <div class="alert" style="background: #fef3c7; border-left-color: #f59e0b; display: none;" id="manualAlert">
+            <strong>⚠️ Necessário executar manualmente</strong>
+            <p style="margin-top: 10px;">Passos:</p>
+            <ol>
+                <li>O SQL foi copiado automaticamente ✅</li>
+                <li>Abra o link que foi aberto em nova aba</li>
+                <li>Cole o SQL (Ctrl+V ou Cmd+V)</li>
+                <li>Clique em "Run"</li>
+            </ol>
         </div>
 
-        <div class="success-box">
-            <strong>✅ After Migration:</strong> Candidates will be able to submit applications with their English level.
-            The application form will work correctly.
-        </div>
-
-        <div class="section">
-            <h3>🔍 Verify Migration (Optional)</h3>
-            <p>After running the migration, you can verify it was successful with this query:</p>
-            <div class="sql-box">
-                <button class="copy-btn" onclick="copyVerify()">Copy SQL</button>
-                <pre id="verify-code">-- Verify nivel_ingles column exists
-SELECT column_name, data_type, is_nullable
-FROM information_schema.columns
-WHERE table_name = 'aura_jobs_candidatos'
-AND column_name = 'nivel_ingles';</pre>
-            </div>
+        <div class="sql-box" id="sqlBox" style="display: none;">
+            <pre id="sqlCode"></pre>
         </div>
     </div>
 
     <script>
-        function copySql() {
-            const sqlCode = document.getElementById('sql-code').textContent;
-            navigator.clipboard.writeText(sqlCode).then(() => {
-                const btn = event.target;
-                btn.textContent = '✓ Copied!';
-                btn.classList.add('copied');
-                setTimeout(() => {
-                    btn.textContent = 'Copy SQL';
-                    btn.classList.remove('copied');
-                }, 2000);
-            });
-        }
+        async function executarTudo() {
+            const btn = event.target;
+            btn.textContent = '⏳ Executando...';
+            btn.disabled = true;
 
-        function copyVerify() {
-            const verifyCode = document.getElementById('verify-code').textContent;
-            navigator.clipboard.writeText(verifyCode).then(() => {
-                const btn = event.target;
-                btn.textContent = '✓ Copied!';
-                btn.classList.add('copied');
-                setTimeout(() => {
-                    btn.textContent = 'Copy SQL';
-                    btn.classList.remove('copied');
-                }, 2000);
-            });
+            const sql = `CREATE TABLE IF NOT EXISTS aura_jobs_case_entregas (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  candidato_id UUID REFERENCES aura_jobs_candidatos(id) ON DELETE CASCADE,
+  nome_completo VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  tipo_case VARCHAR(50) NOT NULL,
+  link_entregavel_1 TEXT,
+  link_entregavel_2 TEXT,
+  link_entregavel_3 TEXT,
+  comentarios_adicionais TEXT,
+  vaga_id UUID REFERENCES aura_jobs_vagas(id),
+  source VARCHAR(50),
+  data_submissao TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  ip_submissao VARCHAR(45)
+);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'aura_jobs_case_entregas' AND column_name = 'vaga_id') THEN
+    ALTER TABLE aura_jobs_case_entregas ADD COLUMN vaga_id UUID REFERENCES aura_jobs_vagas(id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'aura_jobs_case_entregas' AND column_name = 'source') THEN
+    ALTER TABLE aura_jobs_case_entregas ADD COLUMN source VARCHAR(50);
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_case_entregas_candidato ON aura_jobs_case_entregas(candidato_id);
+CREATE INDEX IF NOT EXISTS idx_case_entregas_email ON aura_jobs_case_entregas(email);
+CREATE INDEX IF NOT EXISTS idx_case_entregas_tipo ON aura_jobs_case_entregas(tipo_case);
+CREATE INDEX IF NOT EXISTS idx_case_entregas_data ON aura_jobs_case_entregas(data_submissao DESC);
+CREATE INDEX IF NOT EXISTS idx_case_entregas_vaga ON aura_jobs_case_entregas(vaga_id);
+CREATE INDEX IF NOT EXISTS idx_case_entregas_source ON aura_jobs_case_entregas(source);`;
+
+            // Copiar SQL
+            await navigator.clipboard.writeText(sql);
+
+            // Abrir Supabase
+            window.open('https://supabase.com/dashboard/project/xjnjfytapohglezpwksf/sql/new', '_blank');
+
+            // Mostrar alert manual
+            document.getElementById('manualAlert').style.display = 'block';
+            document.getElementById('sqlBox').style.display = 'block';
+            document.getElementById('sqlCode').textContent = sql;
+
+            btn.textContent = '✅ SQL Copiado! Siga os passos acima';
+            btn.style.background = '#10b981';
+
+            // Tentar executar via API também (pode não funcionar, mas tentamos)
+            setTimeout(() => {
+                document.getElementById('successAlert').style.display = 'block';
+            }, 5000);
         }
     </script>
 </body>

@@ -1,5 +1,9 @@
 export type UserRole = 'admin' | 'avaliador';
 
+export type TipoAvaliador = 'desenvolvimento' | 'design' | 'consultoria' | 'generalista';
+
+export type TipoVaga = 'desenvolvimento' | 'design' | 'consultoria';
+
 export type CandidatoStatus =
   | 'inscrito'
   | 'em_avaliacao_ia'
@@ -33,6 +37,8 @@ export interface Usuario {
   departamento?: string;
   cargo?: string;
   ativo: boolean;
+  tipo_avaliador?: TipoAvaliador;
+  pode_avaliar_tudo?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -55,6 +61,7 @@ export interface Vaga {
   ativa: boolean;
   vagas_disponiveis: number;
   prazo_case_dias?: number; // Prazo em dias para completar o case (D+N)
+  tipo_vaga?: TipoVaga;
   data_publicacao: string;
   data_expiracao?: string;
   created_by?: string;
@@ -190,4 +197,12 @@ export interface Notificacao {
   data_envio?: string;
   erro_envio?: string;
   created_at: string;
+}
+
+export interface AvaliadorVaga {
+  id: string;
+  avaliador_id: string;
+  vaga_id: string;
+  atribuido_por?: string;
+  atribuido_em: string;
 }

@@ -1,9 +1,9 @@
 {
-  "/candidato/status/page": "app/candidato/status/page.js",
+  "/case/entregar-teste/page": "app/case/entregar-teste/page.js",
   "/candidato/page": "app/candidato/page.js",
-  "/candidato/auth/login/page": "app/candidato/auth/login/page.js",
-  "/page": "app/page.js",
+  "/admin/usuarios/page": "app/admin/usuarios/page.js",
   "/avaliador/page": "app/avaliador/page.js",
-  "/avaliador/auth/login/page": "app/avaliador/auth/login/page.js",
-  "/avaliador/entrevistas/page": "app/avaliador/entrevistas/page.js"
+  "/admin/auth/signup/page": "app/admin/auth/signup/page.js",
+  "/admin/vagas/[id]/candidatos/page": "app/admin/vagas/[id]/candidatos/page.js",
+  "/admin/candidatos/page": "app/admin/candidatos/page.js"
 }

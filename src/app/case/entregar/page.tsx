@@ -1,24 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-interface Vaga {
-  id: string
-  titulo: string
-}
-
 export default function EntregarCasePage() {
   const searchParams = useSearchParams()
-  const vagaIdParam = searchParams.get('vaga_id')
-
-  const [vagas, setVagas] = useState<Vaga[]>([])
-  const [vagaSelecionada, setVagaSelecionada] = useState<string>('')
-  const [loadingVagas, setLoadingVagas] = useState(true)
+  const sourceParam = searchParams.get('source') // Rastreamento de origem (ex: notion-dev, notion-design, notion-consultoria)
 
   const [formData, setFormData] = useState({
     nome_completo: '',
@@ -33,43 +23,6 @@ export default function EntregarCasePage() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Carregar vagas ativas
-  useEffect(() => {
-    const loadVagas = async () => {
-      try {
-        const supabase = createClient()
-        const { data, error } = await supabase
-          .from('aura_jobs_vagas')
-          .select('id, titulo')
-          .eq('ativa', true)
-          .order('titulo', { ascending: true })
-
-        if (error) {
-          console.error('Erro ao carregar vagas:', error)
-          setError('Erro ao carregar vagas disponíveis')
-          return
-        }
-
-        setVagas(data || [])
-
-        // Se há vaga no parâmetro da URL, selecionar automaticamente
-        if (vagaIdParam && data?.some(v => v.id === vagaIdParam)) {
-          setVagaSelecionada(vagaIdParam)
-        } else if (data && data.length > 0) {
-          // Selecionar a primeira vaga por padrão
-          setVagaSelecionada(data[0].id)
-        }
-      } catch (err) {
-        console.error('Erro ao carregar vagas:', err)
-        setError('Erro ao carregar vagas disponíveis')
-      } finally {
-        setLoadingVagas(false)
-      }
-    }
-
-    loadVagas()
-  }, [vagaIdParam])
-
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
@@ -82,24 +35,18 @@ export default function EntregarCasePage() {
       return
     }
 
-    if (!vagaSelecionada) {
-      setError('Por favor, selecione uma vaga')
-      return
-    }
-
     setSubmitting(true)
     setError(null)
 
     try {
-      // Buscar a vaga selecionada para obter informações adicionais
-      const vagaAtual = vagas.find(v => v.id === vagaSelecionada)
-
-      // Mapear vaga para tipo_case baseado no título
+      // Mapear source para tipo_case
       let tipo_case = 'desenvolvimento' // padrão
-      if (vagaAtual?.titulo.toLowerCase().includes('designer') || vagaAtual?.titulo.toLowerCase().includes('product')) {
+      if (sourceParam === 'notion-design') {
         tipo_case = 'designer-po'
-      } else if (vagaAtual?.titulo.toLowerCase().includes('consultor')) {
+      } else if (sourceParam === 'notion-consultoria') {
         tipo_case = 'consultoria'
+      } else if (sourceParam === 'notion-dev') {
+        tipo_case = 'desenvolvimento'
       }
 
       const response = await fetch('/api/case/submeter', {
@@ -109,7 +56,8 @@ export default function EntregarCasePage() {
         },
         body: JSON.stringify({
           ...formData,
-          tipo_case
+          tipo_case,
+          source: sourceParam || 'direto' // Rastreamento de origem
         })
       })
 
@@ -135,33 +83,6 @@ export default function EntregarCasePage() {
     }
   }
 
-  const vagaAtual = vagas.find(v => v.id === vagaSelecionada)
-
-  if (loadingVagas) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 to-indigo-100 flex items-center justify-center p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Carregando...</h1>
-        </div>
-      </div>
-    )
-  }
-
-  if (vagas.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 to-indigo-100 flex items-center justify-center p-6">
-        <div className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-8 text-center space-y-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Nenhuma Vaga Disponível
-          </h1>
-          <p className="text-lg text-gray-600">
-            No momento não há vagas ativas com cases práticos disponíveis.
-          </p>
-        </div>
-      </div>
-    )
-  }
-
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-violet-50 to-indigo-100 flex items-center justify-center p-6">
@@ -177,7 +98,7 @@ export default function EntregarCasePage() {
           </h1>
 
           <p className="text-lg text-gray-600">
-            Obrigado por enviar seu case prático para a vaga de <strong>{vagaAtual?.titulo}</strong>. <br />
+            Obrigado por enviar seu case prático! <br />
             Nossa equipe irá avaliar e entraremos em contato em breve.
           </p>
 
@@ -207,25 +128,35 @@ export default function EntregarCasePage() {
           </p>
         </div>
 
-        {/* Seletor de Vaga */}
-        <div className="mb-8">
-          <Label htmlFor="vaga">
-            Filtrar por vaga <span className="text-red-500">*</span>
-          </Label>
-          <select
-            id="vaga"
-            value={vagaSelecionada}
-            onChange={(e) => setVagaSelecionada(e.target.value)}
-            className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-            required
-          >
-            <option value="">Todas as vagas</option>
-            {vagas.map((vaga) => (
-              <option key={vaga.id} value={vaga.id}>
-                {vaga.titulo}
-              </option>
-            ))}
-          </select>
+        {/* Instructional Text Block */}
+        <div className="mb-8 bg-violet-50 border border-violet-200 rounded-lg p-6">
+          <h2 className="text-base font-bold text-violet-900 mb-3">
+            📝 Entrega do Desafio - AutoU
+          </h2>
+
+          <div className="space-y-3 text-sm text-gray-700">
+            <p>
+              <strong>Bem-vindo(a) à etapa de entrega do seu desafio prático!</strong>
+            </p>
+
+            <p>
+              Por favor, utilize este formulário para enviar seus entregáveis. Certifique-se de que todos os links estejam acessíveis e organizados.
+            </p>
+
+            <div>
+              <p className="font-semibold mb-2">📌 Instruções importantes:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Preencha todos os campos obrigatórios (*)</li>
+                <li>Insira links válidos e públicos para seus entregáveis</li>
+                <li>Caso tenha dúvidas, entre em contato com nossa equipe</li>
+                <li>Após o envio, você receberá uma confirmação por e-mail</li>
+              </ul>
+            </div>
+
+            <p className="text-violet-700">
+              💡 <strong>Dica:</strong> Revise seus links antes de enviar para garantir que estejam funcionando corretamente.
+            </p>
+          </div>
         </div>
 
         {error && (
