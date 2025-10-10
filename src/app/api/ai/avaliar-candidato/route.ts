@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { sendEmailWithNodemailer } from '@/lib/email/nodemailer'
 import { emailTemplates } from '@/lib/email/templates'
+import { caseAprovadoTemplate } from '@/lib/email/templates/case-aprovado'
 import { scrapeProfileLinks } from '@/lib/scraper/profileScraper'
 
 const openai = new OpenAI({
@@ -43,12 +44,12 @@ export async function POST(request: NextRequest) {
       }, { status: 404 })
     }
 
-    // Buscar dados da vaga separadamente (incluindo prazo_case_dias)
+    // Buscar dados da vaga separadamente (incluindo prazo_case_dias, case_link_notion, vaga_key)
     let vaga = null
     if (candidato.vaga_id) {
       const { data: vagaData, error: vagaError } = await supabase
         .from('aura_jobs_vagas')
-        .select('titulo, descricao, requisitos, prazo_case_dias')
+        .select('titulo, descricao, requisitos, prazo_case_dias, case_link_notion, vaga_key')
         .eq('id', candidato.vaga_id)
         .single()
 
@@ -433,57 +434,77 @@ export async function POST(request: NextRequest) {
       const emailDestino = candidato.email
 
       if (analise.score >= 7) {
-        // APROVADO: Enviar email de aprovação
+        // APROVADO: Enviar email de aprovação com link do case
         const prazoFormatado = prazoCase
           ? new Date(prazoCase).toLocaleDateString('pt-BR', {
               day: '2-digit',
               month: 'long',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
+              year: 'numeric'
             })
           : 'A definir'
 
-        // Determinar link do case baseado no título da vaga
-        const getCaseLink = (vagaTitulo: string): string => {
+        // Calcular prazo em dias
+        const diasPrazo = vaga?.prazo_case_dias || 5
+
+        // Link do Case no Notion (usar case_link_notion da vaga ou fallback para links antigos)
+        const getCaseLinkFallback = (vagaTitulo: string): string => {
           const titulo = vagaTitulo.toLowerCase()
 
-          // Product Designer ou PO
-          if (titulo.includes('product designer') || titulo.includes('designer') || titulo.includes('po') || titulo.includes('product owner')) {
+          // Designer, UX, UI, Product Designer, PO, Product Manager
+          if (titulo.includes('designer') || titulo.includes('ux') || titulo.includes('ui') ||
+              titulo.includes('po') || titulo.includes('product owner') || titulo.includes('product manager')) {
+            console.log(`📋 Case selecionado: Product Designer/PO (vaga: ${vagaTitulo})`)
             return 'https://www.notion.so/autou-digital/Case-Pr-tico-AutoU-Product-Designer-PO-20d36ce78e5580a5a8f7ce7693d4bfce'
           }
 
-          // Desenvolvedor (Frontend, Backend, Full Stack, etc)
-          if (titulo.includes('desenvolvedor') || titulo.includes('developer') || titulo.includes('frontend') || titulo.includes('backend') || titulo.includes('full stack')) {
+          // Desenvolvedor
+          if (titulo.includes('desenvolvedor') || titulo.includes('developer') ||
+              titulo.includes('frontend') || titulo.includes('backend') ||
+              titulo.includes('full stack') || titulo.includes('fullstack') ||
+              titulo.includes('dev ')) {
+            console.log(`📋 Case selecionado: Desenvolvimento (vaga: ${vagaTitulo})`)
             return 'https://www.notion.so/autou-digital/Case-Pr-tico-AutoU-Desenvolvimento-18836ce78e5580d0b59bcf9610b27769'
           }
 
-          // Consultor de Negócios
-          if (titulo.includes('consultor') || titulo.includes('negócio') || titulo.includes('negocio') || titulo.includes('business')) {
+          // Consultoria, Analista, Dados, Negócios
+          if (titulo.includes('consultor') || titulo.includes('negócio') || titulo.includes('negocio') ||
+              titulo.includes('business') || titulo.includes('analista') || titulo.includes('dados') ||
+              titulo.includes('data ')) {
+            console.log(`📋 Case selecionado: Consultoria (vaga: ${vagaTitulo})`)
             return 'https://www.notion.so/autou-digital/Case-Pr-tico-AutoU-Consultoria-1ff36ce78e5580f5a410c5393d227bfe'
           }
 
-          // Default: link de desenvolvimento
+          // Default: Desenvolvimento
+          console.warn(`⚠️ Vaga "${vagaTitulo}" não bateu com nenhum padrão. Usando case de Desenvolvimento como default.`)
           return 'https://www.notion.so/autou-digital/Case-Pr-tico-AutoU-Desenvolvimento-18836ce78e5580d0b59bcf9610b27769'
         }
 
-        const linkCase = getCaseLink(vaga?.titulo || '')
+        const linkCaseNotion = vaga?.case_link_notion || getCaseLinkFallback(vaga?.titulo || '')
 
-        const emailData = emailTemplates.aprovacaoIA({
+        // Link do formulário de entrega (novo sistema por vaga)
+        const linkFormularioEntrega = vaga?.vaga_key
+          ? `${process.env.NEXT_PUBLIC_APP_URL}/case/entregar/${vaga.vaga_key}`
+          : `${process.env.NEXT_PUBLIC_APP_URL}/case/entregar`
+
+        // Usar novo template de email
+        const emailHtml = caseAprovadoTemplate({
           nome: candidato.nome_completo,
           vagaTitulo: vaga?.titulo || 'Vaga',
-          score: analise.score,
-          prazoCase: prazoFormatado,
-          linkCase: linkCase
+          linkCaseNotion,
+          linkFormularioEntrega,
+          prazoFormatado,
+          diasPrazo
         })
 
         await sendEmailWithNodemailer({
           to: emailDestino,
-          subject: emailData.subject,
-          html: emailData.html
+          subject: `Você foi aprovado! 🎉 - ${vaga?.titulo || 'Vaga AutoU'}`,
+          html: emailHtml
         })
 
         console.log(`✅ Email de aprovação enviado para ${emailDestino}`)
+        console.log(`📎 Link do Case: ${linkCaseNotion}`)
+        console.log(`📤 Link Formulário: ${linkFormularioEntrega}`)
       } else {
         // REPROVADO: Enviar email de rejeição
         const feedbackText = analise.justificativa ||

@@ -62,6 +62,7 @@ export interface Vaga {
   vagas_disponiveis: number;
   prazo_case_dias?: number; // Prazo em dias para completar o case (D+N)
   tipo_vaga?: TipoVaga;
+  case_link_notion?: string; // Link do Notion com o enunciado do case
   data_publicacao: string;
   data_expiracao?: string;
   created_by?: string;
@@ -120,6 +121,12 @@ export interface Candidato {
   case_descricao?: string;
   data_envio_case?: string;
   prazo_case?: string;
+
+  // Entregáveis do Case (novo sistema)
+  url_entregavel_1?: string;
+  url_entregavel_2?: string;
+  url_video?: string;
+  comentarios_adicionais?: string;
   
   // Avaliações
   nota_media_case?: number;
@@ -205,4 +212,25 @@ export interface AvaliadorVaga {
   vaga_id: string;
   atribuido_por?: string;
   atribuido_em: string;
+}
+
+export interface CaseEntrega {
+  id: string;
+  candidato_id: string;
+  vaga_id: string;
+  candidato_email: string;
+  candidato_nome?: string;
+  vaga_titulo?: string;
+  vaga_key?: string;
+  url_entregavel_1?: string;
+  url_entregavel_2?: string;
+  url_video?: string;
+  comentarios_adicionais?: string;
+  ip_address?: string;
+  user_agent?: string;
+  request_payload?: Record<string, any>;
+  versao: number;
+  is_latest: boolean;
+  created_at: string;
+  updated_at: string;
 }

@@ -64,6 +64,7 @@ export default function VagasPage() {
     beneficios: '',
     vagas_disponiveis: '1',
     prazo_case_dias: '5', // Padrão: 5 dias (D+5)
+    case_link_notion: '', // Link do Notion com o case
   })
 
   useEffect(() => {
@@ -141,6 +142,7 @@ export default function VagasPage() {
       beneficios: Array.isArray(vaga.beneficios) ? vaga.beneficios.join('\n') : (vaga.beneficios || ''),
       vagas_disponiveis: vaga.vagas_disponiveis.toString(),
       prazo_case_dias: vaga.prazo_case_dias?.toString() || '5',
+      case_link_notion: (vaga as any).case_link_notion || '',
     })
     setShowModal(true)
   }
@@ -160,6 +162,7 @@ export default function VagasPage() {
       beneficios: '',
       vagas_disponiveis: '1',
       prazo_case_dias: '5',
+      case_link_notion: '',
     })
     setShowModal(true)
   }
@@ -648,6 +651,24 @@ export default function VagasPage() {
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
                     ℹ️ Candidatos terão este prazo para completar o case após serem aprovados pela IA. Padrão: 5 dias (D+5)
+                  </p>
+                </div>
+
+                {/* Link do Case no Notion */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Link do Case Prático (Notion)
+                  </label>
+                  <input
+                    type="url"
+                    name="case_link_notion"
+                    value={formData.case_link_notion}
+                    onChange={handleChange}
+                    placeholder="https://notion.so/autou-digital/..."
+                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-violet-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    📖 Link do Notion com o enunciado do case. Será enviado por email aos candidatos aprovados pela IA.
                   </p>
                 </div>
 

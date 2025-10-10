@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     if (candidato.vaga_id) {
       const { data: vagaData } = await supabase
         .from('aura_jobs_vagas')
-        .select('titulo')
+        .select('titulo, vaga_key, prazo_case_dias')
         .eq('id', candidato.vaga_id)
         .single()
 
@@ -88,12 +88,18 @@ export async function POST(request: NextRequest) {
 
       const linkCase = getCaseLink(vaga?.titulo || '')
 
-      const emailData = emailTemplates.aprovacaoIA({
+      // Montar link do formulário de entrega usando vaga_key
+      const linkFormulario = vaga?.vaga_key
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/case/entregar/${vaga.vaga_key}`
+        : `${process.env.NEXT_PUBLIC_APP_URL}/case/entregar`
+
+      // USAR O NOVO TEMPLATE caseEnviado com DOIS BOTÕES
+      const emailData = emailTemplates.caseEnviado({
         nome: candidato.nome_completo,
         vagaTitulo: vaga?.titulo || 'Vaga',
-        score: candidato.score_ia || 8, // Default 8 para aprovação manual
-        prazoCase: prazoFormatado,
-        linkCase: linkCase
+        prazoEntrega: prazo.toISOString(),
+        linkCase: linkCase,
+        linkFormulario: linkFormulario
       })
 
       await sendEmailWithNodemailer({

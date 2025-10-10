@@ -8,5 +8,23 @@
     "source": "teste-direto",
     "salvo_no_banco": false,
     "_TESTE": true
+  },
+  {
+    "id": "a73283ea-48e3-48d0-abe6-1077760f9211",
+    "email": "paula.mannarino@autou.io",
+    "nome_completo": "Paula Mannarino",
+    "data_submissao": "2025-10-10T14:17:52.671Z",
+    "tipo_case": "desenvolvimento",
+    "source": "direto",
+    "salvo_no_banco": false
+  },
+  {
+    "id": "b287178b-c084-4a37-93a5-d09f73fde36c",
+    "email": "pmannarino@id.uff.br",
+    "nome_completo": "Paula Basilone",
+    "data_submissao": "2025-10-10T18:01:23.832Z",
+    "tipo_case": "desenvolvimento",
+    "source": "direto",
+    "salvo_no_banco": false
   }
 ]

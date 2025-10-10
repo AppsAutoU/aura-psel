@@ -1,120 +1,105 @@
 {
   "pages": {
+    "/api/debug/candidatos-case/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/debug/candidatos-case/route.js"
+    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/admin/candidatos/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/candidatos/[id]/page.js"
-    ],
     "/avaliador/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/avaliador/page.js"
+    ],
+    "/avaliador/auth/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/avaliador/auth/login/page.js"
+    ],
+    "/avaliador/entrevistas/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/avaliador/entrevistas/page.js"
+    ],
+    "/avaliador/debug/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/avaliador/debug/page.js"
+    ],
+    "/api/debug/check-avaliadores/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/debug/check-avaliadores/route.js"
+    ],
+    "/admin/candidatos/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/candidatos/[id]/page.js"
     ],
     "/admin/auth/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/admin/auth/login/page.js"
     ],
-    "/candidato/status/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/candidato/status/page.js"
-    ],
-    "/candidato/auth/login/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/candidato/auth/login/page.js"
-    ],
     "/admin/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/admin/page.js"
     ],
-    "/candidato/page": [
+    "/admin/avaliadores/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/candidato/page.js"
-    ],
-    "/case/entregar/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/case/entregar/page.js"
-    ],
-    "/admin/usuarios/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/usuarios/page.js"
-    ],
-    "/admin/historico/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/historico/page.js"
+      "static/chunks/app/admin/avaliadores/page.js"
     ],
     "/admin/candidatos/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/admin/candidatos/page.js"
     ],
-    "/api/admin/executar-migration-sql/route": [
+    "/candidato/vagas/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/admin/executar-migration-sql/route.js"
+      "static/chunks/app/candidato/vagas/page.js"
     ],
-    "/api/admin/executar-migration-direto/route": [
+    "/candidato/auth/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/admin/executar-migration-direto/route.js"
+      "static/chunks/app/candidato/auth/login/page.js"
     ],
-    "/api/admin/migration-final/route": [
+    "/candidato/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/admin/migration-final/route.js"
+      "static/chunks/app/candidato/page.js"
     ],
-    "/api/case/listar-json/route": [
+    "/candidato/vagas/[vaga_key]/inscrever/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/case/listar-json/route.js"
+      "static/chunks/app/candidato/vagas/[vaga_key]/inscrever/page.js"
     ],
-    "/case/entregar-teste/page": [
+    "/api/ai/avaliar-candidato/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/case/entregar-teste/page.js"
+      "static/chunks/app/api/ai/avaliar-candidato/route.js"
     ],
-    "/api/case/submeter-teste/route": [
+    "/api/admin/enviar-email-decisao/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/case/submeter-teste/route.js"
+      "static/chunks/app/api/admin/enviar-email-decisao/route.js"
     ],
-    "/api/debug/candidatos/route": [
+    "/case/entregar/[vaga_key]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/debug/candidatos/route.js"
+      "static/chunks/app/case/entregar/[vaga_key]/page.js"
     ],
-    "/api/teste/atualizar-status/route": [
+    "/api/case/entregar/[vaga_key]/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/teste/atualizar-status/route.js"
-    ],
-    "/admin/vagas/[id]/candidatos/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/vagas/[id]/candidatos/page.js"
-    ],
-    "/api/admin/executar-migration-avaliadores/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/admin/executar-migration-avaliadores/route.js"
-    ],
-    "/admin/auth/signup/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/auth/signup/page.js"
+      "static/chunks/app/api/case/entregar/[vaga_key]/route.js"
     ]
   }
 }

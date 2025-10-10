@@ -17,6 +17,7 @@ interface CaseEnviadoData {
   vagaTitulo: string
   prazoEntrega: string
   linkCase: string
+  linkFormulario?: string
 }
 
 interface EntrevistaAgendadaData {
@@ -340,113 +341,31 @@ export const emailTemplates = {
     `
   }),
 
-  caseEnviado: (data: CaseEnviadoData) => ({
-    subject: `Case Prático - ${data.vagaTitulo}`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-              line-height: 1.6;
-              color: #333;
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 20px;
-            }
-            .header {
-              background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-              color: white;
-              padding: 30px;
-              border-radius: 10px 10px 0 0;
-              text-align: center;
-            }
-            .content {
-              background: white;
-              padding: 30px;
-              border: 1px solid #e2e8f0;
-              border-radius: 0 0 10px 10px;
-            }
-            .alert-box {
-              background: #fffaf0;
-              border: 2px solid #f6ad55;
-              padding: 15px;
-              margin: 20px 0;
-              border-radius: 8px;
-              text-align: center;
-            }
-            .button {
-              display: inline-block;
-              background: #f6ad55;
-              color: white;
-              padding: 12px 30px;
-              border-radius: 6px;
-              text-decoration: none;
-              font-weight: 600;
-            }
-            .footer {
-              margin-top: 30px;
-              padding-top: 20px;
-              border-top: 1px solid #e2e8f0;
-              text-align: center;
-              color: #718096;
-              font-size: 14px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1 style="margin: 0;">🎯 Case Prático Disponível!</h1>
-          </div>
-          <div class="content">
-            <p>Olá <strong>${data.nome}</strong>,</p>
-            
-            <p>Parabéns! Você avançou para a próxima etapa do processo seletivo para <strong>${data.vagaTitulo}</strong>!</p>
-            
-            <div class="alert-box">
-              <h3 style="margin: 0 0 10px 0; color: #c05621;">⏰ Prazo de Entrega</h3>
-              <p style="margin: 0; font-size: 18px; font-weight: bold;">${data.prazoEntrega}</p>
-            </div>
-            
-            <h3>📝 Instruções:</h3>
-            <ol>
-              <li>Acesse o link abaixo para ver os detalhes do case</li>
-              <li>Leia atentamente todas as instruções</li>
-              <li>Desenvolva sua solução com calma e atenção</li>
-              <li>Envie dentro do prazo estipulado</li>
-            </ol>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${data.linkCase}" class="button">
-                Acessar Case Prático
-              </a>
-            </div>
-            
-            <p><strong>💡 Dicas importantes:</strong></p>
-            <ul>
-              <li>Foque na qualidade, não apenas na velocidade</li>
-              <li>Documente seu processo de pensamento</li>
-              <li>Teste sua solução antes de enviar</li>
-              <li>Em caso de dúvidas, entre em contato conosco</li>
-            </ul>
-            
-            <p>Boa sorte! Estamos ansiosos para ver sua solução.</p>
-          </div>
-          <div class="footer">
-            <p>
-              Em caso de dúvidas sobre o case, responda este email.<br>
-              Contato: <a href="mailto:rh@autou.com.br">rh@autou.com.br</a>
-            </p>
-            <p style="margin-top: 20px; font-size: 12px;">
-              © ${new Date().getFullYear()} AutoU. Todos os direitos reservados.
-            </p>
-          </div>
-        </body>
-      </html>
-    `
-  }),
+  caseEnviado: (data: CaseEnviadoData) => {
+    // Usar o template novo com os 2 botões
+    const { caseAprovadoTemplate } = require('./templates/case-aprovado')
+
+    // Calcular prazo formatado e dias
+    const prazoData = data.prazoEntrega ? new Date(data.prazoEntrega) : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
+    const prazoFormatado = prazoData.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    })
+    const diasPrazo = Math.ceil((prazoData.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+
+    return {
+      subject: `Você foi aprovado! 🎉 - ${data.vagaTitulo}`,
+      html: caseAprovadoTemplate({
+        nome: data.nome,
+        vagaTitulo: data.vagaTitulo,
+        linkCaseNotion: data.linkCase,
+        linkFormularioEntrega: data.linkFormulario || `${process.env.NEXT_PUBLIC_APP_URL}/case/entregar`,
+        prazoFormatado,
+        diasPrazo
+      })
+    }
+  },
 
   entrevistaAgendada: (data: EntrevistaAgendadaData) => ({
     subject: `Entrevista Agendada - ${data.vagaTitulo}`,

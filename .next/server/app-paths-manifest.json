@@ -1,9 +1,9 @@
 {
-  "/case/entregar-teste/page": "app/case/entregar-teste/page.js",
-  "/candidato/page": "app/candidato/page.js",
-  "/admin/usuarios/page": "app/admin/usuarios/page.js",
+  "/api/case/entregar/[vaga_key]/route": "app/api/case/entregar/[vaga_key]/route.js",
+  "/api/admin/enviar-email-decisao/route": "app/api/admin/enviar-email-decisao/route.js",
   "/avaliador/page": "app/avaliador/page.js",
-  "/admin/auth/signup/page": "app/admin/auth/signup/page.js",
-  "/admin/vagas/[id]/candidatos/page": "app/admin/vagas/[id]/candidatos/page.js",
-  "/admin/candidatos/page": "app/admin/candidatos/page.js"
+  "/admin/auth/login/page": "app/admin/auth/login/page.js",
+  "/case/entregar/[vaga_key]/page": "app/case/entregar/[vaga_key]/page.js",
+  "/admin/candidatos/page": "app/admin/candidatos/page.js",
+  "/admin/candidatos/[id]/page": "app/admin/candidatos/[id]/page.js"
 }

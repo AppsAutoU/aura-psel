@@ -68,11 +68,23 @@ export async function POST(request: NextRequest) {
           break
 
         case 'case_enviado':
+          // Buscar vaga_key para montar link do formulário
+          const { data: vagaData } = await supabase
+            .from('aura_jobs_vagas')
+            .select('vaga_key')
+            .eq('id', candidatura.vaga_id)
+            .single()
+
+          const linkFormulario = vagaData?.vaga_key
+            ? `${process.env.NEXT_PUBLIC_APP_URL}/case/entregar/${vagaData.vaga_key}`
+            : `${process.env.NEXT_PUBLIC_APP_URL}/case/entregar`
+
           emailTemplate = emailTemplates.caseEnviado({
             nome: candidatura.nome_completo,
             vagaTitulo,
             prazoEntrega: emailData.prazoEntrega,
-            linkCase: emailData.linkCase
+            linkCase: emailData.linkCase,
+            linkFormulario
           })
           break
 
